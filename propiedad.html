@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="titulo-pagina">Detalle de Propiedad</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="pagina-individual">
+    <header>
+        <h1><a href="index.html">⬅️ Volver al Listado</a></h1>
+    </header>
+
+    <main id="detalle-propiedad-contenedor">
+        <h2 id="titulo-propiedad">Cargando Detalles...</h2>
+
+        <div id="detalles-propiedad">
+            <p><strong>📍 Ubicación:</strong> <span id="detalles-ubicacion"></span></p>
+            <p><strong>💰 Precio:</strong> <span id="detalles-presupuesto"></span></p>
+            <p><strong>📐 Dimensiones (m²):</strong> <span id="detalles-dimensiones"></span></p>
+            <p><strong>🛏️ Dormitorios:</strong> <span id="detalles-dormitorios"></span></p>
+            <p><strong>🛁 Baños:</strong> <span id="detalles-baños"></span></p>
+            
+            <hr>
+            
+            <h3>Características Adicionales</h3>
+            <ul>
+                <li id="detalles-mantenimiento">Costo de Mantenimiento: </li>
+                <li id="detalles-estado">Estado/Propósito: </li>
+                <li id="detalles-garaje">Estacionamiento: </li>
+            </ul>
+        </div>
+        
+        <section id="contacto-info">
+            <h3>📞 Contacto</h3>
+            <p>Para más información, llamar a: <span id="detalles-contacto"></span></p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Datos proporcionados por la inmobiliaria.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
