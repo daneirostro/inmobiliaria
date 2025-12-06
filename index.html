@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Inmobiliario - Listado</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="pagina-listado">
+    <header>
+        <h1>Inmobiliaria Lima</h1>
+        <p>Encuentra tu próximo hogar en Lima.</p>
+    </header>
+
+    <main>
+        <section id="filtros">
+            <h2>🔎 Buscar Propiedades</h2>
+            <form id="form-filtros">
+                <div class="filtro-grupo">
+                    <label for="tipo">Tipo de Propiedad:</label>
+                    <select id="tipo" name="tipo">
+                        <option value="">Todos</option>
+                        <option value="departamento">Departamento</option>
+                        <option value="casa">Casa</option>
+                        <option value="terreno">Terreno</option>
+                        <option value="oficina">Oficina</option>
+                    </select>
+                </div>
+
+                <div class="filtro-grupo">
+                    <label for="ubicacion">Ubicación (Distrito):</label>
+                    <input type="text" id="ubicacion" name="ubicacion" placeholder="Ej: Miraflores, Surco">
+                </div>
+
+                <div class="filtro-grupo">
+                    <label for="presupuesto_min">Precio Mínimo (USD):</label>
+                    <input type="number" id="presupuesto_min" name="presupuesto_min" min="0" placeholder="Ej: 50000">
+                </div>
+                
+                <div class="filtro-grupo">
+                    <label for="presupuesto_max">Precio Máximo (USD):</label>
+                    <input type="number" id="presupuesto_max" name="presupuesto_max" min="0" placeholder="Ej: 150000">
+                </div>
+                
+                <button type="submit" disabled style="opacity: 0.5;">Buscar (implementado en JS)</button>
+            </form>
+        </section>
+
+        <hr>
+
+        <section id="listado">
+            <h2>📍 Propiedades Disponibles</h2>
+            <p>Cargando propiedades...</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Inmobiliaria. Datos cargados desde Google Sheets.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
