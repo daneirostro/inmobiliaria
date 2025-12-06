@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Inmobiliario - Listado</title>
+    <title>Portal Inmobiliario - Listado de Propiedades</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body id="pagina-listado">
     <header>
         <h1>Inmobiliaria Lima</h1>
-        <p>Encuentra tu próximo hogar en Lima.</p>
+        <p>Encuentra tu próximo hogar o inversión en Lima.</p>
     </header>
 
     <main>
@@ -42,7 +42,7 @@
                     <input type="number" id="presupuesto_max" name="presupuesto_max" min="0" placeholder="Ej: 150000">
                 </div>
                 
-                <button type="submit" disabled style="opacity: 0.5;">Buscar (implementado en JS)</button>
+                <button type="button" onclick="return false;">Filtrar</button>
             </form>
         </section>
 
@@ -55,8 +55,10 @@
     </main>
 
     <footer>
-        <p>&copy; 2025 Inmobiliaria. Datos cargados desde Google Sheets.</p>
+        <p>&copy; 2025 Inmobiliaria. Portal desarrollado con GitHub Pages y Google Sheets.</p>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script> 
 
     <script src="script.js"></script>
 </body>
