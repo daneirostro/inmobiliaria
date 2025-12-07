@@ -1,0 +1,279 @@
+/*
+==================================================
+  1. VARIABLES Y RESET GLOBAL
+==================================================
+*/
+:root {
+    --color-principal: #007bff; /* Azul primario para botones/links */
+    --color-secundario: #495057; /* Texto secundario */
+    --color-fondo: #f8f9fa; /* Gris claro para el fondo */
+    --color-tarjeta: #ffffff; /* Fondo de tarjeta */
+    --color-sombra: rgba(0, 0, 0, 0.1);
+    --ancho-maximo: 1200px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--color-fondo);
+    color: #343a40;
+    line-height: 1.6;
+}
+
+main {
+    max-width: var(--ancho-maximo);
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+a {
+    color: var(--color-principal);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #0056b3;
+}
+
+/*
+==================================================
+  2. CABECERA Y PIE DE PÁGINA
+==================================================
+*/
+header {
+    background-color: var(--color-tarjeta);
+    color: var(--color-secundario);
+    padding: 20px;
+    border-bottom: 3px solid var(--color-principal);
+    text-align: center;
+    box-shadow: 0 2px 4px var(--color-sombra);
+}
+
+header h1 {
+    margin-bottom: 5px;
+    font-size: 2.2rem;
+}
+
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: 30px;
+    font-size: 0.9rem;
+    color: var(--color-secundario);
+    border-top: 1px solid #dee2e6;
+}
+
+/*
+==================================================
+  3. FILTROS (index.html)
+==================================================
+*/
+#filtros {
+    background-color: var(--color-tarjeta);
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px var(--color-sombra);
+}
+
+#form-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end; /* Alinea los botones y etiquetas */
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+    flex-grow: 1; /* Permite que los grupos de filtros se expandan */
+}
+
+.filtro-grupo label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+#form-filtros input,
+#form-filtros select,
+#form-filtros button {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 100%;
+}
+
+#form-filtros button {
+    background-color: var(--color-principal);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    height: 42px; /* Alineado con los inputs */
+    flex-grow: 0;
+}
+
+#form-filtros button:hover {
+    background-color: #0056b3;
+}
+
+/*
+==================================================
+  4. LISTADO DE PROPIEDADES (index.html)
+==================================================
+*/
+#listado {
+    padding-top: 10px;
+}
+
+/* Diseño de cuadrícula para las tarjetas */
+#listado h2 {
+    margin-bottom: 20px;
+    border-left: 5px solid var(--color-principal);
+    padding-left: 10px;
+}
+
+.propiedad-card {
+    background-color: var(--color-tarjeta);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px var(--color-sombra);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s;
+}
+
+.propiedad-card:hover {
+    transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
+}
+
+.propiedad-card h3 {
+    color: var(--color-principal);
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.propiedad-card .precio {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.propiedad-card .boton-detalle {
+    background-color: var(--color-secundario);
+    color: white;
+    text-align: center;
+    padding: 8px 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+    display: block;
+}
+
+.propiedad-card .boton-detalle:hover {
+    background-color: #343a40;
+}
+
+/* Grid para mostrar 3 tarjetas por fila en escritorio */
+@media (min-width: 992px) {
+    #listado {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
+/*
+==================================================
+  5. VISTA DE DETALLE (propiedad.html)
+==================================================
+*/
+#detalle-propiedad-contenedor {
+    background-color: var(--color-tarjeta);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--color-sombra);
+}
+
+#titulo-propiedad {
+    font-size: 1.8rem;
+    color: var(--color-principal);
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+#detalles-propiedad p,
+#detalles-propiedad li {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+#detalles-propiedad strong {
+    color: var(--color-secundario);
+}
+
+#detalles-propiedad ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 15px;
+}
+
+#detalles-propiedad hr {
+    margin: 20px 0;
+    border: 0;
+    border-top: 1px dashed #ced4da;
+}
+
+#contacto-info {
+    margin-top: 30px;
+    padding: 15px;
+    border: 1px solid #ced4da;
+    border-left: 5px solid var(--color-principal);
+    border-radius: 4px;
+}
+
+#contacto-info h3 {
+    color: var(--color-principal);
+    margin-bottom: 10px;
+}
+
+/*
+==================================================
+  6. RESPONSIVE (Ajustes para móviles)
+==================================================
+*/
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+    
+    #form-filtros {
+        flex-direction: column; /* Apila los filtros verticalmente */
+        align-items: stretch;
+    }
+
+    .filtro-grupo {
+        min-width: 100%;
+    }
+
+    #form-filtros button {
+        margin-top: 10px;
+    }
+
+    /* La cuadrícula de propiedades pasa a ser una columna simple */
+    @media (min-width: 768px) and (max-width: 991px) {
+        #listado {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+}
