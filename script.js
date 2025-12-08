@@ -4,7 +4,7 @@
 
 // ⚠️ IMPORTANTE: REEMPLAZA ESTE URL con el enlace CSV que obtuviste al 
 // publicar tu Google Sheet (Archivo > Compartir > Publicar en la web).
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvsVH4vPOaGi-27Oof4k0OrhgXwYNB8KqduzGgIhwjoaIcT88rbDczgcFV0H7Xa67AQrwt-ZaWz99M/pub?gid=1251243348&single=true&output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiTXv6ObJDm5Z07dXZM7THkrFe6JQW5GE8pr4Tr2clKEZYAnga_EHCCSqumim4iLTX-Ul5dpxqDQ2S/pub?gid=1388338922&single=true&output=csv"; 
 
 let PROPIEDADES = []; // Almacenará todos los datos de las propiedades
 const DELIMITADOR_CSV = ';'; // Debe coincidir con el delimitador usado en tu script de Python
