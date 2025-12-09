@@ -3,62 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Inmobiliario - Listado de Propiedades</title>
+    <title id="titulo-pagina">Detalle de Propiedad</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body id="pagina-listado">
+<body id="pagina-individual">
     <header>
-        <h1>Inmobiliaria Lima</h1>
-        <p>Encuentra tu próximo hogar o inversión en Lima.</p>
+        <h1><a href="index.html">⬅️ Volver al Listado</a></h1>
     </header>
 
-    <main>
-        <section id="filtros">
-            <h2>🔎 Buscar Propiedades</h2>
-            <form id="form-filtros">
-                <div class="filtro-grupo">
-                    <label for="tipo">Tipo de Propiedad:</label>
-                    <select id="tipo" name="tipo">
-                        <option value="">Todos</option>
-                        <option value="departamento">Departamento</option>
-                        <option value="casa">Casa</option>
-                        <option value="terreno">Terreno</option>
-                        <option value="oficina">Oficina</option>
-                    </select>
-                </div>
-
-                <div class="filtro-grupo">
-                    <label for="ubicacion">Ubicación (Distrito):</label>
-                    <input type="text" id="ubicacion" name="ubicacion" placeholder="Ej: Miraflores, Surco">
-                </div>
-
-                <div class="filtro-grupo">
-                    <label for="presupuesto_min">Precio Mínimo (USD):</label>
-                    <input type="number" id="presupuesto_min" name="presupuesto_min" min="0" placeholder="Ej: 50000">
-                </div>
-                
-                <div class="filtro-grupo">
-                    <label for="presupuesto_max">Precio Máximo (USD):</label>
-                    <input type="number" id="presupuesto_max" name="presupuesto_max" min="0" placeholder="Ej: 150000">
-                </div>
-                
-                <button type="button" onclick="return false;">Filtrar</button>
-            </form>
-        </section>
-
-        <hr>
-
-        <section id="listado">
-            <h2>📍 Propiedades Disponibles</h2>
-            <p>Cargando propiedades...</p>
+    <main id="detalle-propiedad-contenedor">
+        <h2 id="titulo-propiedad">Cargando Detalles...</h2>
+        
+        <div id="detalles-propiedad">
+            <p><strong>📍 Ubicación:</strong> <span id="detalles-ubicacion"></span></p>
+            <p><strong>💰 Precio:</strong> <span id="detalles-presupuesto"></span></p>
+            <p><strong>📐 Dimensiones (m²):</strong> <span id="detalles-dimensiones"></span></p>
+            <p><strong>🛏️ Dormitorios:</strong> <span id="detalles-dormitorios"></span></p>
+            <p><strong>🛁 Baños:</strong> <span id="detalles-baños"></span></p>
+            
+            <hr>
+            
+            <h3>Características Adicionales</h3>
+            <ul>
+                <li id="detalles-mantenimiento">Costo de Mantenimiento: </li>
+                <li id="detalles-estado">Estado/Propósito: </li>
+                <li id="detalles-garaje">Estacionamiento: </li>
+            </ul>
+        </div>
+        
+        <section id="contacto-info">
+            <h3>📞 Contacto</h3>
+            <p>Para más información, llamar a: <span id="detalles-contacto"></span></p>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2025 Inmobiliaria. Portal desarrollado con GitHub Pages y Google Sheets.</p>
+        <p>Datos proporcionados por la inmobiliaria.</p>
     </footer>
 
-    <script src="/inmobiliaria/lib/papaparse.min.js"></script>
+    <script src="/inmobiliaria/lib/papaparse.min.js"></script> 
     
     <script src="script.js"></script>
 </body>
