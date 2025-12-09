@@ -42,6 +42,20 @@ function convertirADivisa(valor) {
     return new Intl.NumberFormat('es-PE', opciones).format(num);
 }
 
+/**
+ * Intenta establecer el textContent de un elemento, ignorando si el elemento no existe (null).
+ * Esto evita que el script se caiga por un ID mal escrito.
+ */
+function setTextContent(id, content) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = content || 'N/D'; // Usa 'N/D' si el contenido está vacío
+    } else {
+        // Opcional: Esto ayuda a depurar en la consola si un ID está mal
+        // console.warn(`Elemento HTML no encontrado: #${id}`);
+    }
+}
+
 // ====================================================================
 // 1. CARGA DE DATOS (PapaParse)
 // ====================================================================
