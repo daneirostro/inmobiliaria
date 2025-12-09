@@ -209,22 +209,29 @@ function mostrarPropiedadIndividual() {
         return;
     }
     
-    // 3. Renderizar los detalles
+    // 3. Renderizar los detalles (USANDO LA FUNCIÓN DEFENSIVA)
     const precio = convertirADivisa(propiedad[COLUMNA_PRECIO]);
     const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
 
-    document.getElementById('titulo-propiedad').textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Ubicación Desconocida'}`;
+    // Título Principal
+    setTextContent('titulo-propiedad', 
+        `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Ubicación Desconocida'}`
+    );
     
-    document.getElementById('detalles-ubicacion').textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
-    document.getElementById('detalles-presupuesto').textContent = precio;
-    document.getElementById('detalles-dimensiones').textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
-    document.getElementById('detalles-dormitorios').textContent = propiedad[COLUMNA_DORM] || 'N/D';
-    document.getElementById('detalles-baños').textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    // Contenedores de span
+    setTextContent('detalles-ubicacion', `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`);
+    setTextContent('detalles-presupuesto', precio);
+    setTextContent('detalles-dimensiones', `${propiedad[COLUMNA_M2] || 'N/D'} m²`);
+    setTextContent('detalles-dormitorios', propiedad[COLUMNA_DORM] || 'N/D');
+    setTextContent('detalles-baños', propiedad[COLUMNA_BANIOS] || 'N/D');
+    setTextContent('detalles-contacto', propiedad[COLUMNA_CONTACTO] || 'Consultar con la inmobiliaria');
     
-    document.getElementById('detalles-mantenimiento').textContent = `Costo de Mantenimiento: ${mant}`;
-    document.getElementById('detalles-estado').textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    document.getElementById('detalles-garaje').textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    document.getElementById('detalles-contacto').textContent = propiedad[COLUMNA_CONTACTO] || 'Consultar con la inmobiliaria';
+    // Elementos de lista (li)
+    setTextContent('detalles-mantenimiento', `Costo de Mantenimiento: ${mant}`);
+    setTextContent('detalles-estado', `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`);
+    setTextContent('detalles-garaje', `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`);
+
+    // ... (El resto de la función sigue igual)
 }
 
 // ====================================================================
