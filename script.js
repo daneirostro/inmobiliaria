@@ -46,13 +46,18 @@ function convertirADivisa(valor) {
  * Intenta establecer el textContent de un elemento, ignorando si el elemento no existe (null).
  * Esto evita que el script se caiga por un ID mal escrito.
  */
+
+/**
+ * Intenta establecer el textContent de un elemento, ignorando si el elemento no existe (null).
+ * Esto evita que el script se caiga por un ID mal escrito en el HTML.
+ */
 function setTextContent(id, content) {
     const element = document.getElementById(id);
     if (element) {
         element.textContent = content || 'N/D'; // Usa 'N/D' si el contenido está vacío
     } else {
-        // Opcional: Esto ayuda a depurar en la consola si un ID está mal
-        // console.warn(`Elemento HTML no encontrado: #${id}`);
+        // ¡CRUCIAL! Esto imprime el ID faltante en la Consola
+        console.error(`❌ ERROR DE RENDERIZADO: Elemento HTML no encontrado: #${id}`); 
     }
 }
 
@@ -209,7 +214,7 @@ function mostrarPropiedadIndividual() {
         return;
     }
     
-    // 3. Renderizar los detalles (USANDO LA FUNCIÓN DEFENSIVA)
+    // 3. Renderizar los detalles
     const precio = convertirADivisa(propiedad[COLUMNA_PRECIO]);
     const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
 
@@ -227,6 +232,7 @@ function mostrarPropiedadIndividual() {
     setTextContent('detalles-contacto', propiedad[COLUMNA_CONTACTO] || 'Consultar con la inmobiliaria');
     
     // Elementos de lista (li)
+    // Nota: Aunque solo se actualiza el texto, el ID es del <li> completo
     setTextContent('detalles-mantenimiento', `Costo de Mantenimiento: ${mant}`);
     setTextContent('detalles-estado', `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`);
     setTextContent('detalles-garaje', `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`);
