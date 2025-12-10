@@ -60,9 +60,8 @@ async function cargarPropiedades() {
     if (esPaginaListado && contenedorListado) {
         contenedorListado.innerHTML = '<p>Cargando datos. Por favor, espere...</p>';
     }
-    if (esPaginaIndividual && contenedorDetalle && !esPaginaListado) {
-        contenedorDetalle.innerHTML = '<p>Cargando datos. Por favor, espere...</p>';
-    }
+    // ✅ NO reemplazar el contenido en la página individual - ya tiene los elementos necesarios
+    // El mensaje "Cargando Detalles..." ya está en el HTML
     
     try {
         const respuesta = await fetch(SHEET_URL);
@@ -83,7 +82,10 @@ async function cargarPropiedades() {
         if (PROPIEDADES.length === 0) {
             const mensaje = '<p>❌ No se encontraron propiedades. Verifique el CSV y los nombres de las columnas.</p>';
             if (contenedorListado) contenedorListado.innerHTML = mensaje;
-            if (contenedorDetalle) contenedorDetalle.innerHTML = mensaje;
+            // ✅ En página individual, mostrar error sin borrar los elementos
+            if (contenedorDetalle && document.getElementById('titulo-propiedad')) {
+                document.getElementById('titulo-propiedad').textContent = 'Error: No hay datos';
+            }
             return;
         }
 
@@ -105,7 +107,10 @@ async function cargarPropiedades() {
         console.error("Error al cargar las propiedades:", error);
         const mensajeError = '<p>❌ Error de conexión. Verifique el SHEET_URL y la publicación de su Hoja de Google.</p>';
         if (contenedorListado) contenedorListado.innerHTML = mensajeError;
-        if (contenedorDetalle) contenedorDetalle.innerHTML = mensajeError;
+        // ✅ En página individual, mostrar error sin borrar los elementos
+        if (contenedorDetalle && document.getElementById('titulo-propiedad')) {
+            document.getElementById('titulo-propiedad').textContent = 'Error de conexión';
+        }
     }
 }
 
