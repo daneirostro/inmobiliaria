@@ -42,33 +42,23 @@ function convertirADivisa(valor) {
     return new Intl.NumberFormat('es-PE', opciones).format(num);
 }
 
-/**
- * Intenta establecer el textContent de un elemento, ignorando si el elemento no existe (null).
- * Esto evita que el script se caiga por un ID mal escrito.
- */
-
-/**
- * Intenta establecer el textContent de un elemento, ignorando si el elemento no existe (null).
- * Esto evita que el script se caiga por un ID mal escrito en el HTML.
- */
-function setTextContent(id, content) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.textContent = content || 'N/D'; // Usa 'N/D' si el contenido está vacío
-    } else {
-        // ¡CRUCIAL! Esto imprime el ID faltante en la Consola
-        console.error(`❌ ERROR DE RENDERIZADO: Elemento HTML no encontrado: #${id}`); 
-    }
-}
-
 // ====================================================================
 // 1. CARGA DE DATOS (PapaParse)
 // ====================================================================
 
 async function cargarPropiedades() {
-    const contenedorListado = document.getElementById('listado') || document.getElementById('detalle-propiedad-contenedor');
-    if (contenedorListado) {
+    // ✅ CORRECCIÓN: Identificar en qué página estamos ANTES de mostrar mensajes
+    const esPaginaListado = document.body.id === 'pagina-listado';
+    const esPaginaIndividual = document.body.id === 'pagina-individual';
+    
+    const contenedorListado = document.getElementById('listado');
+    const contenedorDetalle = document.getElementById('detalle-propiedad-contenedor');
+    
+    // Mostrar mensaje de carga solo en el contenedor correcto
+    if (esPaginaListado && contenedorListado) {
         contenedorListado.innerHTML = '<p>Cargando datos. Por favor, espere...</p>';
+    } else if (esPaginaIndividual && contenedorDetalle) {
+        contenedorDetalle.innerHTML = '<p>Cargando datos. Por favor, espere...</p>';
     }
     
     try {
@@ -80,7 +70,7 @@ async function cargarPropiedades() {
         const resultadosParseados = Papa.parse(textoCsv, {
             header: true,
             skipEmptyLines: true,
-            delimiter: DELIMITADOR_CSV, // ✅ Delimitador COMA
+            delimiter: DELIMITADOR_CSV,
             dynamicTyping: true
         });
 
@@ -88,25 +78,27 @@ async function cargarPropiedades() {
         PROPIEDADES = resultadosParseados.data.filter(p => p[COLUMNA_ID]);
         
         if (PROPIEDADES.length === 0) {
-            contenedorListado.innerHTML = '<p>❌ No se encontraron propiedades. Verifique el CSV y los nombres de las columnas.</p>';
+            const mensaje = '<p>❌ No se encontraron propiedades. Verifique el CSV y los nombres de las columnas.</p>';
+            if (contenedorListado) contenedorListado.innerHTML = mensaje;
+            if (contenedorDetalle) contenedorDetalle.innerHTML = mensaje;
             return;
         }
 
         console.log(`✅ ${PROPIEDADES.length} propiedades cargadas.`);
 
-        // Iniciar la lógica de la página
-        if (document.body.id === 'pagina-listado') {
+        // ✅ CORRECCIÓN: Solo ejecutar la lógica de la página actual
+        if (esPaginaListado) {
             renderizarListado(PROPIEDADES);
             configurarFiltros();
-        } else if (document.body.id === 'pagina-individual') {
+        } else if (esPaginaIndividual) {
             mostrarPropiedadIndividual();
         }
 
     } catch (error) {
         console.error("Error al cargar las propiedades:", error);
-        if (contenedorListado) {
-            contenedorListado.innerHTML = '<p>❌ Error de conexión. Verifique el SHEET_URL y la publicación de su Hoja de Google.</p>';
-        }
+        const mensajeError = '<p>❌ Error de conexión. Verifique el SHEET_URL y la publicación de su Hoja de Google.</p>';
+        if (contenedorListado) contenedorListado.innerHTML = mensajeError;
+        if (contenedorDetalle) contenedorDetalle.innerHTML = mensajeError;
     }
 }
 
@@ -167,6 +159,8 @@ function configurarFiltros() {
 
 function renderizarListado(listado) {
     const contenedor = document.getElementById('listado');
+    if (!contenedor) return; // ✅ Validación adicional
+    
     contenedor.innerHTML = ''; 
 
     if (listado.length === 0) {
@@ -196,48 +190,60 @@ function renderizarListado(listado) {
 // ====================================================================
 
 function mostrarPropiedadIndividual() {
+    // ✅ CORRECCIÓN: Validar que todos los elementos existan
+    const elementos = {
+        contenedor: document.getElementById('detalle-propiedad-contenedor'),
+        titulo: document.getElementById('titulo-propiedad'),
+        ubicacion: document.getElementById('detalles-ubicacion'),
+        presupuesto: document.getElementById('detalles-presupuesto'),
+        dimensiones: document.getElementById('detalles-dimensiones'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-baños'),
+        mantenimiento: document.getElementById('detalles-mantenimiento'),
+        estado: document.getElementById('detalles-estado'),
+        garaje: document.getElementById('detalles-garaje'),
+        contacto: document.getElementById('detalles-contacto')
+    };
+    
+    // Si falta algún elemento, abortar
+    if (!elementos.contenedor || !elementos.titulo) {
+        console.error('Error: Los elementos necesarios no están en el DOM');
+        return;
+    }
+    
     // 1. Obtener el ID de la URL
     const params = new URLSearchParams(window.location.search);
     const idUnico = params.get('id');
 
     if (!idUnico) {
-        document.getElementById('detalle-propiedad-contenedor').innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
+        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
         return;
     }
 
     // 2. Buscar la propiedad en el array global
-    // Importante: El ID es leído como string, se compara con el valor de la columna ID.
     const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
 
     if (!propiedad) {
-        document.getElementById('detalle-propiedad-contenedor').innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
         return;
     }
     
-    // 3. Renderizar los detalles
+    // 3. Renderizar los detalles de forma segura
     const precio = convertirADivisa(propiedad[COLUMNA_PRECIO]);
     const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
 
-    // Título Principal
-    setTextContent('titulo-propiedad', 
-        `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Ubicación Desconocida'}`
-    );
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Ubicación Desconocida'}`;
     
-    // Contenedores de span
-    setTextContent('detalles-ubicacion', `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`);
-    setTextContent('detalles-presupuesto', precio);
-    setTextContent('detalles-dimensiones', `${propiedad[COLUMNA_M2] || 'N/D'} m²`);
-    setTextContent('detalles-dormitorios', propiedad[COLUMNA_DORM] || 'N/D');
-    setTextContent('detalles-baños', propiedad[COLUMNA_BANIOS] || 'N/D');
-    setTextContent('detalles-contacto', propiedad[COLUMNA_CONTACTO] || 'Consultar con la inmobiliaria');
+    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
+    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
     
-    // Elementos de lista (li)
-    // Nota: Aunque solo se actualiza el texto, el ID es del <li> completo
-    setTextContent('detalles-mantenimiento', `Costo de Mantenimiento: ${mant}`);
-    setTextContent('detalles-estado', `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`);
-    setTextContent('detalles-garaje', `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`);
-
-    // ... (El resto de la función sigue igual)
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
+    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
+    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    if (elementos.contacto) elementos.contacto.textContent = propiedad[COLUMNA_CONTACTO] || 'Consultar con la inmobiliaria';
 }
 
 // ====================================================================
