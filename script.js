@@ -198,6 +198,8 @@ function renderizarListado(listado) {
 
 function mostrarPropiedadIndividual() {
     console.log('Ejecutando mostrarPropiedadIndividual...');
+    console.log('Body ID:', document.body.id);
+    console.log('Buscando elemento detalle-propiedad-contenedor...');
     
     // ✅ CORRECCIÓN: Validar que todos los elementos existan
     const elementos = {
@@ -214,9 +216,13 @@ function mostrarPropiedadIndividual() {
         contacto: document.getElementById('detalles-contacto')
     };
     
+    console.log('Contenedor encontrado:', elementos.contenedor);
+    console.log('Título encontrado:', elementos.titulo);
+    
     // Si falta algún elemento crítico, abortar silenciosamente (estamos en la página incorrecta)
     if (!elementos.contenedor || !elementos.titulo) {
         console.log('Elementos de detalle no encontrados - probablemente en página de listado');
+        console.log('Todos los elementos del body:', document.body.innerHTML.substring(0, 500));
         return;
     }
     
@@ -259,4 +265,10 @@ function mostrarPropiedadIndividual() {
 // INICIO DE EJECUCIÓN
 // ====================================================================
 
-window.onload = cargarPropiedades;
+// ✅ Usar DOMContentLoaded en lugar de window.onload para ejecutar apenas el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarPropiedades);
+} else {
+    // El DOM ya está listo, ejecutar inmediatamente
+    cargarPropiedades();
+}
