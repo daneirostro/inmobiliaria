@@ -47,9 +47,11 @@ function convertirADivisa(valor) {
 // ====================================================================
 
 async function cargarPropiedades() {
-    // ✅ CORRECCIÓN: Identificar en qué página estamos ANTES de mostrar mensajes
-    const esPaginaListado = document.body.id === 'pagina-listado';
-    const esPaginaIndividual = document.body.id === 'pagina-individual';
+    // ✅ CORRECCIÓN: Identificar en qué página estamos usando múltiples métodos
+    const esPaginaListado = document.body.id === 'pagina-listado' || document.getElementById('listado') !== null;
+    const esPaginaIndividual = document.body.id === 'pagina-individual' || document.getElementById('detalle-propiedad-contenedor') !== null;
+    
+    console.log('Página detectada - Listado:', esPaginaListado, 'Individual:', esPaginaIndividual);
     
     const contenedorListado = document.getElementById('listado');
     const contenedorDetalle = document.getElementById('detalle-propiedad-contenedor');
@@ -57,7 +59,8 @@ async function cargarPropiedades() {
     // Mostrar mensaje de carga solo en el contenedor correcto
     if (esPaginaListado && contenedorListado) {
         contenedorListado.innerHTML = '<p>Cargando datos. Por favor, espere...</p>';
-    } else if (esPaginaIndividual && contenedorDetalle) {
+    }
+    if (esPaginaIndividual && contenedorDetalle && !esPaginaListado) {
         contenedorDetalle.innerHTML = '<p>Cargando datos. Por favor, espere...</p>';
     }
     
@@ -87,11 +90,15 @@ async function cargarPropiedades() {
         console.log(`✅ ${PROPIEDADES.length} propiedades cargadas.`);
 
         // ✅ CORRECCIÓN: Solo ejecutar la lógica de la página actual
-        if (esPaginaListado) {
+        if (esPaginaListado && !esPaginaIndividual) {
+            console.log('Renderizando listado...');
             renderizarListado(PROPIEDADES);
             configurarFiltros();
-        } else if (esPaginaIndividual) {
+        } else if (esPaginaIndividual && !esPaginaListado) {
+            console.log('Mostrando propiedad individual...');
             mostrarPropiedadIndividual();
+        } else {
+            console.warn('No se pudo determinar el tipo de página correctamente');
         }
 
     } catch (error) {
@@ -190,6 +197,8 @@ function renderizarListado(listado) {
 // ====================================================================
 
 function mostrarPropiedadIndividual() {
+    console.log('Ejecutando mostrarPropiedadIndividual...');
+    
     // ✅ CORRECCIÓN: Validar que todos los elementos existan
     const elementos = {
         contenedor: document.getElementById('detalle-propiedad-contenedor'),
@@ -205,9 +214,9 @@ function mostrarPropiedadIndividual() {
         contacto: document.getElementById('detalles-contacto')
     };
     
-    // Si falta algún elemento, abortar
+    // Si falta algún elemento crítico, abortar silenciosamente (estamos en la página incorrecta)
     if (!elementos.contenedor || !elementos.titulo) {
-        console.error('Error: Los elementos necesarios no están en el DOM');
+        console.log('Elementos de detalle no encontrados - probablemente en página de listado');
         return;
     }
     
