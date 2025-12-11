@@ -47,14 +47,32 @@ function convertirADivisa(valor) {
 // ====================================================================
 
 async function cargarPropiedades() {
-    // ✅ CORRECCIÓN: Identificar en qué página estamos usando múltiples métodos
-    const esPaginaListado = document.body.id === 'pagina-listado' || document.getElementById('listado') !== null;
-    const esPaginaIndividual = document.body.id === 'pagina-individual' || document.getElementById('detalle-propiedad-contenedor') !== null;
-    
-    console.log('Página detectada - Listado:', esPaginaListado, 'Individual:', esPaginaIndividual);
+    // ✅ CORRECCIÓN: Detección más robusta basada en la URL y elementos del DOM
+    const urlActual = window.location.pathname;
+    const tieneParametroID = new URLSearchParams(window.location.search).has('id');
     
     const contenedorListado = document.getElementById('listado');
     const contenedorDetalle = document.getElementById('detalle-propiedad-contenedor');
+    const formularioFiltros = document.getElementById('form-filtros');
+    
+    // Determinar página basándose en múltiples factores
+    const esPaginaListado = (
+        document.body.id === 'pagina-listado' || 
+        (contenedorListado && formularioFiltros) ||
+        urlActual.includes('index.html') ||
+        urlActual.endsWith('/')
+    ) && !tieneParametroID;
+    
+    const esPaginaIndividual = (
+        document.body.id === 'pagina-individual' || 
+        urlActual.includes('propiedad.html') ||
+        tieneParametroID
+    ) && !contenedorListado;
+    
+    console.log('URL actual:', urlActual);
+    console.log('Tiene parámetro ID:', tieneParametroID);
+    console.log('Body ID:', document.body.id);
+    console.log('Página detectada - Listado:', esPaginaListado, 'Individual:', esPaginaIndividual);
     
     // Mostrar mensaje de carga solo en el contenedor correcto
     if (esPaginaListado && contenedorListado) {
