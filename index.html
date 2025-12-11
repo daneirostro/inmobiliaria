@@ -43,7 +43,21 @@
                 </div>
                 
                 <div class="filtro-grupo filtro-rango">
-                    <label for="rango_precio">Rango de Precio (USD): <span id="valor-min">$0</span> - <span id="valor-max">$500,000+</span></label>
+                    <label>Moneda:</label>
+                    <div class="moneda-selector">
+                        <label>
+                            <input type="radio" name="moneda" value="USD" checked>
+                            Dólares (USD)
+                        </label>
+                        <label>
+                            <input type="radio" name="moneda" value="PEN">
+                            Soles (PEN)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="filtro-grupo filtro-rango">
+                    <label for="rango_precio">Rango de Precio: <span id="valor-min">$0</span> - <span id="valor-max">$500,000+</span></label>
                     <div class="rango-inputs">
                         <input type="number" id="presupuesto_min" name="presupuesto_min" min="0" placeholder="Mínimo" value="0">
                         <span>-</span>
