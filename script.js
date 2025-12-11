@@ -10,7 +10,7 @@ const DELIMITADOR_CSV = ',';
 const COLUMNA_ID = 'id'; 
 const COLUMNA_TIPO = 'tipo_propiedad';
 const COLUMNA_UBICACION = 'distrito';
-const COLUMNA_PRECIO = 'presupuesto_dolares';
+const COLUMNA_PRECIO_USD = 'presupuesto_dolares';
 const COLUMNA_PRECIO_SOLES = 'presupuesto_soles';
 const COLUMNA_M2 = 'area_m2';
 const COLUMNA_DORM = 'dormitorios';
@@ -18,23 +18,40 @@ const COLUMNA_BANIOS = 'baños';
 const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_PROPOSITO = 'proposito';
 
+// Tasa de cambio aproximada para conversión
+const TASA_CAMBIO = 3.75; // 1 USD = 3.75 PEN
+
 // ====================================================================
 // FUNCIONES UTILITARIAS
 // ====================================================================
 
-function convertirADivisa(valor) {
+function obtenerPrecioYMoneda(propiedad) {
+    const precioUSD = parseFloat(propiedad[COLUMNA_PRECIO_USD]) || 0;
+    const precioSoles = parseFloat(propiedad[COLUMNA_PRECIO_SOLES]) || 0;
+    
+    if (precioUSD > 0) {
+        return { valor: precioUSD, moneda: 'USD', esUSD: true };
+    } else if (precioSoles > 0) {
+        return { valor: precioSoles, moneda: 'PEN', esUSD: false };
+    }
+    
+    return { valor: 0, moneda: 'USD', esUSD: true };
+}
+
+function convertirADivisa(valor, moneda) {
     if (!valor || isNaN(parseFloat(valor))) return 'Precio no especificado';
     const num = parseFloat(String(valor).replace(/,/g, '').trim());
+    
     const opciones = {
         style: 'currency',
-        currency: 'USD',
+        currency: moneda,
         minimumFractionDigits: 0
     };
     return new Intl.NumberFormat('es-PE', opciones).format(num);
 }
 
 function generarEnlaceWhatsApp(telefono, nombrePropiedad) {
-    if (!telefono) return 'No disponible';
+    if (!telefono) return '#';
     
     let numeroLimpio = String(telefono).replace(/[\s\-\(\)\+]/g, '');
     
@@ -43,7 +60,7 @@ function generarEnlaceWhatsApp(telefono, nombrePropiedad) {
     }
     
     if (!/^\d+$/.test(numeroLimpio)) {
-        return telefono;
+        return '#';
     }
     
     const mensaje = encodeURIComponent(`Hola, estoy interesado en la propiedad: ${nombrePropiedad}`);
@@ -75,9 +92,6 @@ async function cargarPropiedades() {
         tieneParametroID
     ) && !contenedorListado;
     
-    console.log('URL actual:', urlActual);
-    console.log('Tiene parámetro ID:', tieneParametroID);
-    console.log('Body ID:', document.body.id);
     console.log('Página detectada - Listado:', esPaginaListado, 'Individual:', esPaginaIndividual);
     
     if (esPaginaListado && contenedorListado) {
@@ -111,14 +125,10 @@ async function cargarPropiedades() {
         console.log(`✅ ${PROPIEDADES.length} propiedades cargadas.`);
 
         if (esPaginaListado && !esPaginaIndividual) {
-            console.log('Renderizando listado...');
             renderizarListado(PROPIEDADES);
             configurarFiltros();
         } else if (esPaginaIndividual && !esPaginaListado) {
-            console.log('Mostrando propiedad individual...');
             mostrarPropiedadIndividual();
-        } else {
-            console.warn('No se pudo determinar el tipo de página correctamente');
         }
 
     } catch (error) {
@@ -166,13 +176,11 @@ function aplicarFiltros() {
             return false;
         }
         
-        // Obtener precio en dólares para comparar (convertir soles a USD si es necesario)
         const precioData = obtenerPrecioYMoneda(propiedad);
         let precioEnUSD = precioData.valor;
         
-        // Si el precio está en soles, convertir a USD aproximadamente (tasa: 1 USD ≈ 3.75 PEN)
         if (!precioData.esUSD) {
-            precioEnUSD = precioData.valor / 3.75;
+            precioEnUSD = precioData.valor / TASA_CAMBIO;
         }
         
         if (precioEnUSD < filtros.presupuesto_min || precioEnUSD > filtros.presupuesto_max) {
@@ -266,7 +274,6 @@ function renderizarListado(listado) {
         const card = document.createElement('article');
         card.className = 'propiedad-card';
         
-        // Obtener precio y moneda correcta
         const precioData = obtenerPrecioYMoneda(propiedad);
         const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
         
@@ -289,10 +296,6 @@ function renderizarListado(listado) {
 // ====================================================================
 
 function mostrarPropiedadIndividual() {
-    console.log('Ejecutando mostrarPropiedadIndividual...');
-    console.log('Body ID:', document.body.id);
-    console.log('Buscando elemento detalle-propiedad-contenedor...');
-    
     const elementos = {
         contenedor: document.getElementById('detalle-propiedad-contenedor'),
         titulo: document.getElementById('titulo-propiedad'),
@@ -307,12 +310,7 @@ function mostrarPropiedadIndividual() {
         contacto: document.getElementById('detalles-contacto')
     };
     
-    console.log('Contenedor encontrado:', elementos.contenedor);
-    console.log('Título encontrado:', elementos.titulo);
-    
     if (!elementos.contenedor || !elementos.titulo) {
-        console.log('Elementos de detalle no encontrados - probablemente en página de listado');
-        console.log('Todos los elementos del body:', document.body.innerHTML.substring(0, 500));
         return;
     }
     
