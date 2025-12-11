@@ -11,6 +11,7 @@ const COLUMNA_ID = 'id';
 const COLUMNA_TIPO = 'tipo_propiedad';
 const COLUMNA_UBICACION = 'distrito';
 const COLUMNA_PRECIO = 'presupuesto_dolares';
+const COLUMNA_PRECIO_SOLES = 'presupuesto_soles';
 const COLUMNA_M2 = 'area_m2';
 const COLUMNA_DORM = 'dormitorios';
 const COLUMNA_BANIOS = 'baños';
@@ -165,9 +166,16 @@ function aplicarFiltros() {
             return false;
         }
         
-        let precioNum = parseFloat(propiedad[COLUMNA_PRECIO] || 0);
+        // Obtener precio en dólares para comparar (convertir soles a USD si es necesario)
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        let precioEnUSD = precioData.valor;
         
-        if (precioNum < filtros.presupuesto_min || precioNum > filtros.presupuesto_max) {
+        // Si el precio está en soles, convertir a USD aproximadamente (tasa: 1 USD ≈ 3.75 PEN)
+        if (!precioData.esUSD) {
+            precioEnUSD = precioData.valor / 3.75;
+        }
+        
+        if (precioEnUSD < filtros.presupuesto_min || precioEnUSD > filtros.presupuesto_max) {
             return false;
         }
 
@@ -258,7 +266,10 @@ function renderizarListado(listado) {
         const card = document.createElement('article');
         card.className = 'propiedad-card';
         
-        const precioFormateado = convertirADivisa(propiedad[COLUMNA_PRECIO]);
+        // Obtener precio y moneda correcta
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
+        
         const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
         const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
 
@@ -320,7 +331,8 @@ function mostrarPropiedadIndividual() {
         return;
     }
     
-    const precio = convertirADivisa(propiedad[COLUMNA_PRECIO]);
+    const precioData = obtenerPrecioYMoneda(propiedad);
+    const precio = convertirADivisa(precioData.valor, precioData.moneda);
     const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
     const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
     const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
