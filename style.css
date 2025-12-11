@@ -247,6 +247,34 @@ footer {
     margin-bottom: 10px;
 }
 
+/* Estilos para enlaces de WhatsApp */
+.whatsapp-link {
+    color: #25D366;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.whatsapp-link:hover {
+    color: #128C7E;
+    text-decoration: underline;
+}
+
+/* Si quieres un botón más destacado en las cards */
+.propiedad-card .whatsapp-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: #25D366;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.propiedad-card .whatsapp-link:hover {
+    background-color: #128C7E;
+}
+
 /*
 ==================================================
   6. RESPONSIVE (Ajustes para móviles)
