@@ -147,12 +147,15 @@ async function cargarPropiedades() {
 
 function obtenerValoresFiltros() {
     const form = document.getElementById('form-filtros');
+    const monedaSeleccionada = form.moneda.value; // USD o PEN
+    
     return {
         accion: form.accion.value.trim().toLowerCase(),
         tipo: form.tipo.value,
         ubicacion: form.ubicacion.value.trim().toLowerCase(),
         presupuesto_min: parseFloat(form.presupuesto_min.value) || 0,
         presupuesto_max: parseFloat(form.presupuesto_max.value) || Infinity,
+        moneda: monedaSeleccionada
     };
 }
 
@@ -160,6 +163,7 @@ function aplicarFiltros() {
     const filtros = obtenerValoresFiltros();
     
     const resultados = PROPIEDADES.filter(propiedad => {
+        // Filtro por ACCIÓN
         if (filtros.accion) {
             const propositoProp = String(propiedad[COLUMNA_PROPOSITO] || '').toLowerCase();
             if (!propositoProp.includes(filtros.accion)) {
@@ -167,23 +171,29 @@ function aplicarFiltros() {
             }
         }
         
+        // Filtro por TIPO
         if (filtros.tipo && String(propiedad[COLUMNA_TIPO]).toLowerCase() !== filtros.tipo) {
             return false;
         }
 
+        // Filtro por UBICACIÓN
         const ubicacionProp = String(propiedad[COLUMNA_UBICACION] || '').toLowerCase();
         if (filtros.ubicacion && !ubicacionProp.includes(filtros.ubicacion)) {
             return false;
         }
         
+        // Filtro por PRECIO y MONEDA
         const precioData = obtenerPrecioYMoneda(propiedad);
-        let precioEnUSD = precioData.valor;
         
-        if (!precioData.esUSD) {
-            precioEnUSD = precioData.valor / TASA_CAMBIO;
+        // Solo mostrar propiedades en la moneda seleccionada
+        const monedaPropiedad = precioData.esUSD ? 'USD' : 'PEN';
+        if (monedaPropiedad !== filtros.moneda) {
+            return false;
         }
         
-        if (precioEnUSD < filtros.presupuesto_min || precioEnUSD > filtros.presupuesto_max) {
+        // Filtrar por rango de precio en la moneda correspondiente
+        const precio = precioData.valor;
+        if (precio < filtros.presupuesto_min || precio > filtros.presupuesto_max) {
             return false;
         }
 
@@ -200,48 +210,698 @@ function sincronizarSliders() {
     const inputMax = document.getElementById('presupuesto_max');
     const valorMinSpan = document.getElementById('valor-min');
     const valorMaxSpan = document.getElementById('valor-max');
+    const radiosMoneda = document.getElementsByName('moneda');
     
     if (!sliderMin || !sliderMax) return;
     
+    // Función para actualizar el símbolo de moneda
+    function actualizarSimboloMoneda() {
+        const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
+        const simbolo = monedaSeleccionada === 'USD' ? '
+
+function configurarFiltros() {
+    const form = document.getElementById('form-filtros');
+    if (form) {
+        form.addEventListener('input', aplicarFiltros);
+        form.addEventListener('change', aplicarFiltros);
+        sincronizarSliders();
+    }
+}
+
+// ====================================================================
+// RENDERIZADO DEL LISTADO
+// ====================================================================
+
+function renderizarListado(listado) {
+    const contenedor = document.getElementById('listado');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = ''; 
+
+    if (listado.length === 0) {
+        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
+        return;
+    }
+
+    listado.forEach(propiedad => {
+        const card = document.createElement('article');
+        card.className = 'propiedad-card';
+        
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
+        
+        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+        card.innerHTML = `
+            <h3>${nombrePropiedad}</h3>
+            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
+            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
+            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
+            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
+        `;
+        contenedor.appendChild(card);
+    });
+}
+
+// ====================================================================
+// VISTA INDIVIDUAL
+// ====================================================================
+
+function mostrarPropiedadIndividual() {
+    const elementos = {
+        contenedor: document.getElementById('detalle-propiedad-contenedor'),
+        titulo: document.getElementById('titulo-propiedad'),
+        ubicacion: document.getElementById('detalles-ubicacion'),
+        presupuesto: document.getElementById('detalles-presupuesto'),
+        dimensiones: document.getElementById('detalles-dimensiones'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-baños'),
+        mantenimiento: document.getElementById('detalles-mantenimiento'),
+        estado: document.getElementById('detalles-estado'),
+        garaje: document.getElementById('detalles-garaje'),
+        contacto: document.getElementById('detalles-contacto')
+    };
+    
+    if (!elementos.contenedor || !elementos.titulo) {
+        return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const idUnico = params.get('id');
+
+    if (!idUnico) {
+        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
+        return;
+    }
+
+    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
+
+    if (!propiedad) {
+        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        return;
+    }
+    
+    const precioData = obtenerPrecioYMoneda(propiedad);
+    const precio = convertirADivisa(precioData.valor, precioData.moneda);
+    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
+    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
+    
+    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
+    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
+    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
+    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    
+    if (elementos.contacto) {
+        if (propiedad[COLUMNA_CONTACTO]) {
+            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+        } else {
+            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+        }
+    }
+}
+
+// ====================================================================
+// INICIO DE EJECUCIÓN
+// ====================================================================
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarPropiedades);
+} else {
+    cargarPropiedades();
+} : 'S/.';
+        const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000; // 500k USD ≈ 1.875M PEN
+        
+        // Actualizar límites de sliders según moneda
+        sliderMin.max = maxValor;
+        sliderMax.max = maxValor;
+        
+        // Ajustar paso según moneda
+        const paso = monedaSeleccionada === 'USD' ? 10000 : 37500;
+        sliderMin.step = paso;
+        sliderMax.step = paso;
+        
+        // Resetear valores
+        sliderMin.value = 0;
+        sliderMax.value = maxValor;
+        inputMin.value = 0;
+        inputMax.value = '';
+        
+        valorMinSpan.textContent = simbolo + '0';
+        valorMaxSpan.textContent = simbolo + maxValor.toLocaleString('en-US') + '+';
+        
+        aplicarFiltros();
+    }
+    
+    // Escuchar cambios en los radio buttons de moneda
+    radiosMoneda.forEach(radio => {
+        radio.addEventListener('change', actualizarSimboloMoneda);
+    });
+    
     sliderMin.addEventListener('input', function() {
+        const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
+        const simbolo = monedaSeleccionada === 'USD' ? '
+
+function configurarFiltros() {
+    const form = document.getElementById('form-filtros');
+    if (form) {
+        form.addEventListener('input', aplicarFiltros);
+        form.addEventListener('change', aplicarFiltros);
+        sincronizarSliders();
+    }
+}
+
+// ====================================================================
+// RENDERIZADO DEL LISTADO
+// ====================================================================
+
+function renderizarListado(listado) {
+    const contenedor = document.getElementById('listado');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = ''; 
+
+    if (listado.length === 0) {
+        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
+        return;
+    }
+
+    listado.forEach(propiedad => {
+        const card = document.createElement('article');
+        card.className = 'propiedad-card';
+        
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
+        
+        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+        card.innerHTML = `
+            <h3>${nombrePropiedad}</h3>
+            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
+            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
+            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
+            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
+        `;
+        contenedor.appendChild(card);
+    });
+}
+
+// ====================================================================
+// VISTA INDIVIDUAL
+// ====================================================================
+
+function mostrarPropiedadIndividual() {
+    const elementos = {
+        contenedor: document.getElementById('detalle-propiedad-contenedor'),
+        titulo: document.getElementById('titulo-propiedad'),
+        ubicacion: document.getElementById('detalles-ubicacion'),
+        presupuesto: document.getElementById('detalles-presupuesto'),
+        dimensiones: document.getElementById('detalles-dimensiones'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-baños'),
+        mantenimiento: document.getElementById('detalles-mantenimiento'),
+        estado: document.getElementById('detalles-estado'),
+        garaje: document.getElementById('detalles-garaje'),
+        contacto: document.getElementById('detalles-contacto')
+    };
+    
+    if (!elementos.contenedor || !elementos.titulo) {
+        return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const idUnico = params.get('id');
+
+    if (!idUnico) {
+        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
+        return;
+    }
+
+    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
+
+    if (!propiedad) {
+        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        return;
+    }
+    
+    const precioData = obtenerPrecioYMoneda(propiedad);
+    const precio = convertirADivisa(precioData.valor, precioData.moneda);
+    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
+    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
+    
+    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
+    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
+    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
+    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    
+    if (elementos.contacto) {
+        if (propiedad[COLUMNA_CONTACTO]) {
+            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+        } else {
+            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+        }
+    }
+}
+
+// ====================================================================
+// INICIO DE EJECUCIÓN
+// ====================================================================
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarPropiedades);
+} else {
+    cargarPropiedades();
+} : 'S/.';
+        
         let minVal = parseInt(this.value);
         let maxVal = parseInt(sliderMax.value);
+        const paso = monedaSeleccionada === 'USD' ? 10000 : 37500;
         
-        if (minVal > maxVal - 10000) {
-            minVal = maxVal - 10000;
+        if (minVal > maxVal - paso) {
+            minVal = maxVal - paso;
             this.value = minVal;
         }
         
         inputMin.value = minVal;
-        valorMinSpan.textContent = '$' + minVal.toLocaleString('en-US');
+        valorMinSpan.textContent = simbolo + minVal.toLocaleString('en-US');
         aplicarFiltros();
     });
     
     sliderMax.addEventListener('input', function() {
+        const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
+        const simbolo = monedaSeleccionada === 'USD' ? '
+
+function configurarFiltros() {
+    const form = document.getElementById('form-filtros');
+    if (form) {
+        form.addEventListener('input', aplicarFiltros);
+        form.addEventListener('change', aplicarFiltros);
+        sincronizarSliders();
+    }
+}
+
+// ====================================================================
+// RENDERIZADO DEL LISTADO
+// ====================================================================
+
+function renderizarListado(listado) {
+    const contenedor = document.getElementById('listado');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = ''; 
+
+    if (listado.length === 0) {
+        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
+        return;
+    }
+
+    listado.forEach(propiedad => {
+        const card = document.createElement('article');
+        card.className = 'propiedad-card';
+        
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
+        
+        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+        card.innerHTML = `
+            <h3>${nombrePropiedad}</h3>
+            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
+            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
+            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
+            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
+        `;
+        contenedor.appendChild(card);
+    });
+}
+
+// ====================================================================
+// VISTA INDIVIDUAL
+// ====================================================================
+
+function mostrarPropiedadIndividual() {
+    const elementos = {
+        contenedor: document.getElementById('detalle-propiedad-contenedor'),
+        titulo: document.getElementById('titulo-propiedad'),
+        ubicacion: document.getElementById('detalles-ubicacion'),
+        presupuesto: document.getElementById('detalles-presupuesto'),
+        dimensiones: document.getElementById('detalles-dimensiones'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-baños'),
+        mantenimiento: document.getElementById('detalles-mantenimiento'),
+        estado: document.getElementById('detalles-estado'),
+        garaje: document.getElementById('detalles-garaje'),
+        contacto: document.getElementById('detalles-contacto')
+    };
+    
+    if (!elementos.contenedor || !elementos.titulo) {
+        return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const idUnico = params.get('id');
+
+    if (!idUnico) {
+        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
+        return;
+    }
+
+    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
+
+    if (!propiedad) {
+        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        return;
+    }
+    
+    const precioData = obtenerPrecioYMoneda(propiedad);
+    const precio = convertirADivisa(precioData.valor, precioData.moneda);
+    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
+    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
+    
+    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
+    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
+    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
+    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    
+    if (elementos.contacto) {
+        if (propiedad[COLUMNA_CONTACTO]) {
+            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+        } else {
+            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+        }
+    }
+}
+
+// ====================================================================
+// INICIO DE EJECUCIÓN
+// ====================================================================
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarPropiedades);
+} else {
+    cargarPropiedades();
+} : 'S/.';
+        const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
+        
         let maxVal = parseInt(this.value);
         let minVal = parseInt(sliderMin.value);
+        const paso = monedaSeleccionada === 'USD' ? 10000 : 37500;
         
-        if (maxVal < minVal + 10000) {
-            maxVal = minVal + 10000;
+        if (maxVal < minVal + paso) {
+            maxVal = minVal + paso;
             this.value = maxVal;
         }
         
-        inputMax.value = maxVal >= 500000 ? '' : maxVal;
-        valorMaxSpan.textContent = maxVal >= 500000 ? '$500,000+' : '$' + maxVal.toLocaleString('en-US');
+        inputMax.value = maxVal >= maxValor ? '' : maxVal;
+        valorMaxSpan.textContent = maxVal >= maxValor ? simbolo + maxValor.toLocaleString('en-US') + '+' : simbolo + maxVal.toLocaleString('en-US');
         aplicarFiltros();
     });
     
     inputMin.addEventListener('input', function() {
+        const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
+        const simbolo = monedaSeleccionada === 'USD' ? '
+
+function configurarFiltros() {
+    const form = document.getElementById('form-filtros');
+    if (form) {
+        form.addEventListener('input', aplicarFiltros);
+        form.addEventListener('change', aplicarFiltros);
+        sincronizarSliders();
+    }
+}
+
+// ====================================================================
+// RENDERIZADO DEL LISTADO
+// ====================================================================
+
+function renderizarListado(listado) {
+    const contenedor = document.getElementById('listado');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = ''; 
+
+    if (listado.length === 0) {
+        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
+        return;
+    }
+
+    listado.forEach(propiedad => {
+        const card = document.createElement('article');
+        card.className = 'propiedad-card';
+        
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
+        
+        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+        card.innerHTML = `
+            <h3>${nombrePropiedad}</h3>
+            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
+            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
+            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
+            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
+        `;
+        contenedor.appendChild(card);
+    });
+}
+
+// ====================================================================
+// VISTA INDIVIDUAL
+// ====================================================================
+
+function mostrarPropiedadIndividual() {
+    const elementos = {
+        contenedor: document.getElementById('detalle-propiedad-contenedor'),
+        titulo: document.getElementById('titulo-propiedad'),
+        ubicacion: document.getElementById('detalles-ubicacion'),
+        presupuesto: document.getElementById('detalles-presupuesto'),
+        dimensiones: document.getElementById('detalles-dimensiones'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-baños'),
+        mantenimiento: document.getElementById('detalles-mantenimiento'),
+        estado: document.getElementById('detalles-estado'),
+        garaje: document.getElementById('detalles-garaje'),
+        contacto: document.getElementById('detalles-contacto')
+    };
+    
+    if (!elementos.contenedor || !elementos.titulo) {
+        return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const idUnico = params.get('id');
+
+    if (!idUnico) {
+        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
+        return;
+    }
+
+    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
+
+    if (!propiedad) {
+        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        return;
+    }
+    
+    const precioData = obtenerPrecioYMoneda(propiedad);
+    const precio = convertirADivisa(precioData.valor, precioData.moneda);
+    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
+    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
+    
+    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
+    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
+    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
+    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    
+    if (elementos.contacto) {
+        if (propiedad[COLUMNA_CONTACTO]) {
+            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+        } else {
+            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+        }
+    }
+}
+
+// ====================================================================
+// INICIO DE EJECUCIÓN
+// ====================================================================
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarPropiedades);
+} else {
+    cargarPropiedades();
+} : 'S/.';
+        const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
+        
         const val = parseInt(this.value) || 0;
-        sliderMin.value = Math.min(val, 500000);
-        valorMinSpan.textContent = '$' + val.toLocaleString('en-US');
+        sliderMin.value = Math.min(val, maxValor);
+        valorMinSpan.textContent = simbolo + val.toLocaleString('en-US');
         aplicarFiltros();
     });
     
     inputMax.addEventListener('input', function() {
-        const val = parseInt(this.value) || 500000;
-        sliderMax.value = Math.min(val, 500000);
-        valorMaxSpan.textContent = val ? '$' + val.toLocaleString('en-US') : '$500,000+';
+        const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
+        const simbolo = monedaSeleccionada === 'USD' ? '
+
+function configurarFiltros() {
+    const form = document.getElementById('form-filtros');
+    if (form) {
+        form.addEventListener('input', aplicarFiltros);
+        form.addEventListener('change', aplicarFiltros);
+        sincronizarSliders();
+    }
+}
+
+// ====================================================================
+// RENDERIZADO DEL LISTADO
+// ====================================================================
+
+function renderizarListado(listado) {
+    const contenedor = document.getElementById('listado');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = ''; 
+
+    if (listado.length === 0) {
+        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
+        return;
+    }
+
+    listado.forEach(propiedad => {
+        const card = document.createElement('article');
+        card.className = 'propiedad-card';
+        
+        const precioData = obtenerPrecioYMoneda(propiedad);
+        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
+        
+        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+        card.innerHTML = `
+            <h3>${nombrePropiedad}</h3>
+            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
+            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
+            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
+            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
+        `;
+        contenedor.appendChild(card);
+    });
+}
+
+// ====================================================================
+// VISTA INDIVIDUAL
+// ====================================================================
+
+function mostrarPropiedadIndividual() {
+    const elementos = {
+        contenedor: document.getElementById('detalle-propiedad-contenedor'),
+        titulo: document.getElementById('titulo-propiedad'),
+        ubicacion: document.getElementById('detalles-ubicacion'),
+        presupuesto: document.getElementById('detalles-presupuesto'),
+        dimensiones: document.getElementById('detalles-dimensiones'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-baños'),
+        mantenimiento: document.getElementById('detalles-mantenimiento'),
+        estado: document.getElementById('detalles-estado'),
+        garaje: document.getElementById('detalles-garaje'),
+        contacto: document.getElementById('detalles-contacto')
+    };
+    
+    if (!elementos.contenedor || !elementos.titulo) {
+        return;
+    }
+    
+    const params = new URLSearchParams(window.location.search);
+    const idUnico = params.get('id');
+
+    if (!idUnico) {
+        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
+        return;
+    }
+
+    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
+
+    if (!propiedad) {
+        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        return;
+    }
+    
+    const precioData = obtenerPrecioYMoneda(propiedad);
+    const precio = convertirADivisa(precioData.valor, precioData.moneda);
+    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
+    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
+    
+    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
+    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
+    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
+    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    
+    if (elementos.contacto) {
+        if (propiedad[COLUMNA_CONTACTO]) {
+            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+        } else {
+            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+        }
+    }
+}
+
+// ====================================================================
+// INICIO DE EJECUCIÓN
+// ====================================================================
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', cargarPropiedades);
+} else {
+    cargarPropiedades();
+} : 'S/.';
+        const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
+        
+        const val = parseInt(this.value) || maxValor;
+        sliderMax.value = Math.min(val, maxValor);
+        valorMaxSpan.textContent = val ? simbolo + val.toLocaleString('en-US') : simbolo + maxValor.toLocaleString('en-US') + '+';
         aplicarFiltros();
     });
 }
