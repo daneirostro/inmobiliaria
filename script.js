@@ -42,6 +42,36 @@ function convertirADivisa(valor) {
     return new Intl.NumberFormat('es-PE', opciones).format(num);
 }
 
+/**
+ * Genera un enlace de WhatsApp con mensaje personalizado
+ * @param {string} telefono - Número de teléfono (puede incluir espacios, guiones, etc)
+ * @param {string} nombrePropiedad - Nombre/descripción de la propiedad
+ * @returns {string} - URL de WhatsApp o el número original si no es válido
+ */
+function generarEnlaceWhatsApp(telefono, nombrePropiedad) {
+    if (!telefono) return 'No disponible';
+    
+    // Limpiar el número: remover espacios, guiones, paréntesis, signos +
+    let numeroLimpio = String(telefono).replace(/[\s\-\(\)\+]/g, '');
+    
+    // Si el número empieza con 51 (código de Perú), asegurarse de que tenga el formato correcto
+    // Si no tiene código de país, agregar 51 (Perú)
+    if (!numeroLimpio.startsWith('51') && numeroLimpio.length === 9) {
+        numeroLimpio = '51' + numeroLimpio;
+    }
+    
+    // Validar que sea un número
+    if (!/^\d+$/.test(numeroLimpio)) {
+        return telefono; // Retornar el original si no es válido
+    }
+    
+    // Crear el mensaje personalizado (URL encoded)
+    const mensaje = encodeURIComponent(`Hola, estoy interesado en la propiedad: ${nombrePropiedad}`);
+    
+    // Generar URL de WhatsApp
+    return `https://wa.me/${numeroLimpio}?text=${mensaje}`;
+}
+
 // ====================================================================
 // 1. CARGA DE DATOS (PapaParse)
 // ====================================================================
@@ -203,12 +233,14 @@ function renderizarListado(listado) {
         card.className = 'propiedad-card';
         
         const precioFormateado = convertirADivisa(propiedad[COLUMNA_PRECIO]);
+        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
 
         card.innerHTML = `
-            <h3>${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}</h3>
+            <h3>${nombrePropiedad}</h3>
             <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
             <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            
+            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
             <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
         `;
         contenedor.appendChild(card);
@@ -269,8 +301,10 @@ function mostrarPropiedadIndividual() {
     // 3. Renderizar los detalles de forma segura
     const precio = convertirADivisa(propiedad[COLUMNA_PRECIO]);
     const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
+    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
 
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Ubicación Desconocida'}`;
+    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
     
     if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
     if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
@@ -281,7 +315,15 @@ function mostrarPropiedadIndividual() {
     if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
     if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
     if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    if (elementos.contacto) elementos.contacto.textContent = propiedad[COLUMNA_CONTACTO] || 'Consultar con la inmobiliaria';
+    
+    // ✅ Crear enlace de WhatsApp en lugar de texto simple
+    if (elementos.contacto) {
+        if (propiedad[COLUMNA_CONTACTO]) {
+            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+        } else {
+            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+        }
+    }
 }
 
 // ====================================================================
