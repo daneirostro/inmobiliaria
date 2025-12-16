@@ -18,9 +18,6 @@ const COLUMNA_BANIOS = 'baños';
 const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_PROPOSITO = 'proposito';
 
-// Tasa de cambio aproximada para conversión
-const TASA_CAMBIO = 3.75; // 1 USD = 3.75 PEN
-
 // ====================================================================
 // FUNCIONES UTILITARIAS
 // ====================================================================
@@ -63,8 +60,8 @@ function generarEnlaceWhatsApp(telefono, nombrePropiedad) {
         return '#';
     }
     
-    const mensaje = encodeURIComponent(`Hola, estoy interesado en la propiedad: ${nombrePropiedad}`);
-    return `https://wa.me/${numeroLimpio}?text=${mensaje}`;
+    const mensaje = encodeURIComponent('Hola, estoy interesado en la propiedad: ' + nombrePropiedad);
+    return 'https://wa.me/' + numeroLimpio + '?text=' + mensaje;
 }
 
 // ====================================================================
@@ -100,7 +97,7 @@ async function cargarPropiedades() {
     
     try {
         const respuesta = await fetch(SHEET_URL);
-        if (!respuesta.ok) throw new Error(`HTTP error! status: ${respuesta.status}`);
+        if (!respuesta.ok) throw new Error('HTTP error! status: ' + respuesta.status);
         
         const textoCsv = await respuesta.text();
         
@@ -122,7 +119,7 @@ async function cargarPropiedades() {
             return;
         }
 
-        console.log(`✅ ${PROPIEDADES.length} propiedades cargadas.`);
+        console.log('✅ ' + PROPIEDADES.length + ' propiedades cargadas.');
 
         if (esPaginaListado && !esPaginaIndividual) {
             renderizarListado(PROPIEDADES);
@@ -147,7 +144,7 @@ async function cargarPropiedades() {
 
 function obtenerValoresFiltros() {
     const form = document.getElementById('form-filtros');
-    const monedaSeleccionada = form.moneda.value; // USD o PEN
+    const monedaSeleccionada = form.moneda.value;
     
     return {
         accion: form.accion.value.trim().toLowerCase(),
@@ -163,7 +160,6 @@ function aplicarFiltros() {
     const filtros = obtenerValoresFiltros();
     
     const resultados = PROPIEDADES.filter(propiedad => {
-        // Filtro por ACCIÓN
         if (filtros.accion) {
             const propositoProp = String(propiedad[COLUMNA_PROPOSITO] || '').toLowerCase();
             if (!propositoProp.includes(filtros.accion)) {
@@ -171,27 +167,22 @@ function aplicarFiltros() {
             }
         }
         
-        // Filtro por TIPO
         if (filtros.tipo && String(propiedad[COLUMNA_TIPO]).toLowerCase() !== filtros.tipo) {
             return false;
         }
 
-        // Filtro por UBICACIÓN
         const ubicacionProp = String(propiedad[COLUMNA_UBICACION] || '').toLowerCase();
         if (filtros.ubicacion && !ubicacionProp.includes(filtros.ubicacion)) {
             return false;
         }
         
-        // Filtro por PRECIO y MONEDA
         const precioData = obtenerPrecioYMoneda(propiedad);
-        
-        // Solo mostrar propiedades en la moneda seleccionada
         const monedaPropiedad = precioData.esUSD ? 'USD' : 'PEN';
+        
         if (monedaPropiedad !== filtros.moneda) {
             return false;
         }
         
-        // Filtrar por rango de precio en la moneda correspondiente
         const precio = precioData.valor;
         if (precio < filtros.presupuesto_min || precio > filtros.presupuesto_max) {
             return false;
@@ -214,142 +205,18 @@ function sincronizarSliders() {
     
     if (!sliderMin || !sliderMax) return;
     
-    // Función para actualizar el símbolo de moneda
     function actualizarSimboloMoneda() {
         const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
-        const simbolo = monedaSeleccionada === 'USD' ? '
-
-function configurarFiltros() {
-    const form = document.getElementById('form-filtros');
-    if (form) {
-        form.addEventListener('input', aplicarFiltros);
-        form.addEventListener('change', aplicarFiltros);
-        sincronizarSliders();
-    }
-}
-
-// ====================================================================
-// RENDERIZADO DEL LISTADO
-// ====================================================================
-
-function renderizarListado(listado) {
-    const contenedor = document.getElementById('listado');
-    if (!contenedor) return;
-    
-    contenedor.innerHTML = ''; 
-
-    if (listado.length === 0) {
-        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
-        return;
-    }
-
-    listado.forEach(propiedad => {
-        const card = document.createElement('article');
-        card.className = 'propiedad-card';
+        const simbolo = monedaSeleccionada === 'USD' ? '$' : 'S/.';
+        const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
         
-        const precioData = obtenerPrecioYMoneda(propiedad);
-        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
-        
-        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-        card.innerHTML = `
-            <h3>${nombrePropiedad}</h3>
-            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
-            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
-            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
-        `;
-        contenedor.appendChild(card);
-    });
-}
-
-// ====================================================================
-// VISTA INDIVIDUAL
-// ====================================================================
-
-function mostrarPropiedadIndividual() {
-    const elementos = {
-        contenedor: document.getElementById('detalle-propiedad-contenedor'),
-        titulo: document.getElementById('titulo-propiedad'),
-        ubicacion: document.getElementById('detalles-ubicacion'),
-        presupuesto: document.getElementById('detalles-presupuesto'),
-        dimensiones: document.getElementById('detalles-dimensiones'),
-        dormitorios: document.getElementById('detalles-dormitorios'),
-        banios: document.getElementById('detalles-baños'),
-        mantenimiento: document.getElementById('detalles-mantenimiento'),
-        estado: document.getElementById('detalles-estado'),
-        garaje: document.getElementById('detalles-garaje'),
-        contacto: document.getElementById('detalles-contacto')
-    };
-    
-    if (!elementos.contenedor || !elementos.titulo) {
-        return;
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const idUnico = params.get('id');
-
-    if (!idUnico) {
-        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
-        return;
-    }
-
-    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
-
-    if (!propiedad) {
-        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
-        return;
-    }
-    
-    const precioData = obtenerPrecioYMoneda(propiedad);
-    const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
-    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
-    
-    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
-    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
-    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
-    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
-    
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
-    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    
-    if (elementos.contacto) {
-        if (propiedad[COLUMNA_CONTACTO]) {
-            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
-        } else {
-            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
-        }
-    }
-}
-
-// ====================================================================
-// INICIO DE EJECUCIÓN
-// ====================================================================
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPropiedades);
-} else {
-    cargarPropiedades();
-} : 'S/.';
-        const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000; // 500k USD ≈ 1.875M PEN
-        
-        // Actualizar límites de sliders según moneda
         sliderMin.max = maxValor;
         sliderMax.max = maxValor;
         
-        // Ajustar paso según moneda
         const paso = monedaSeleccionada === 'USD' ? 10000 : 37500;
         sliderMin.step = paso;
         sliderMax.step = paso;
         
-        // Resetear valores
         sliderMin.value = 0;
         sliderMax.value = maxValor;
         inputMin.value = 0;
@@ -361,134 +228,13 @@ if (document.readyState === 'loading') {
         aplicarFiltros();
     }
     
-    // Escuchar cambios en los radio buttons de moneda
     radiosMoneda.forEach(radio => {
         radio.addEventListener('change', actualizarSimboloMoneda);
     });
     
     sliderMin.addEventListener('input', function() {
         const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
-        const simbolo = monedaSeleccionada === 'USD' ? '
-
-function configurarFiltros() {
-    const form = document.getElementById('form-filtros');
-    if (form) {
-        form.addEventListener('input', aplicarFiltros);
-        form.addEventListener('change', aplicarFiltros);
-        sincronizarSliders();
-    }
-}
-
-// ====================================================================
-// RENDERIZADO DEL LISTADO
-// ====================================================================
-
-function renderizarListado(listado) {
-    const contenedor = document.getElementById('listado');
-    if (!contenedor) return;
-    
-    contenedor.innerHTML = ''; 
-
-    if (listado.length === 0) {
-        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
-        return;
-    }
-
-    listado.forEach(propiedad => {
-        const card = document.createElement('article');
-        card.className = 'propiedad-card';
-        
-        const precioData = obtenerPrecioYMoneda(propiedad);
-        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
-        
-        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-        card.innerHTML = `
-            <h3>${nombrePropiedad}</h3>
-            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
-            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
-            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
-        `;
-        contenedor.appendChild(card);
-    });
-}
-
-// ====================================================================
-// VISTA INDIVIDUAL
-// ====================================================================
-
-function mostrarPropiedadIndividual() {
-    const elementos = {
-        contenedor: document.getElementById('detalle-propiedad-contenedor'),
-        titulo: document.getElementById('titulo-propiedad'),
-        ubicacion: document.getElementById('detalles-ubicacion'),
-        presupuesto: document.getElementById('detalles-presupuesto'),
-        dimensiones: document.getElementById('detalles-dimensiones'),
-        dormitorios: document.getElementById('detalles-dormitorios'),
-        banios: document.getElementById('detalles-baños'),
-        mantenimiento: document.getElementById('detalles-mantenimiento'),
-        estado: document.getElementById('detalles-estado'),
-        garaje: document.getElementById('detalles-garaje'),
-        contacto: document.getElementById('detalles-contacto')
-    };
-    
-    if (!elementos.contenedor || !elementos.titulo) {
-        return;
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const idUnico = params.get('id');
-
-    if (!idUnico) {
-        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
-        return;
-    }
-
-    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
-
-    if (!propiedad) {
-        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
-        return;
-    }
-    
-    const precioData = obtenerPrecioYMoneda(propiedad);
-    const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
-    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
-    
-    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
-    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
-    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
-    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
-    
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
-    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    
-    if (elementos.contacto) {
-        if (propiedad[COLUMNA_CONTACTO]) {
-            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
-        } else {
-            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
-        }
-    }
-}
-
-// ====================================================================
-// INICIO DE EJECUCIÓN
-// ====================================================================
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPropiedades);
-} else {
-    cargarPropiedades();
-} : 'S/.';
+        const simbolo = monedaSeleccionada === 'USD' ? '$' : 'S/.';
         
         let minVal = parseInt(this.value);
         let maxVal = parseInt(sliderMax.value);
@@ -506,127 +252,7 @@ if (document.readyState === 'loading') {
     
     sliderMax.addEventListener('input', function() {
         const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
-        const simbolo = monedaSeleccionada === 'USD' ? '
-
-function configurarFiltros() {
-    const form = document.getElementById('form-filtros');
-    if (form) {
-        form.addEventListener('input', aplicarFiltros);
-        form.addEventListener('change', aplicarFiltros);
-        sincronizarSliders();
-    }
-}
-
-// ====================================================================
-// RENDERIZADO DEL LISTADO
-// ====================================================================
-
-function renderizarListado(listado) {
-    const contenedor = document.getElementById('listado');
-    if (!contenedor) return;
-    
-    contenedor.innerHTML = ''; 
-
-    if (listado.length === 0) {
-        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
-        return;
-    }
-
-    listado.forEach(propiedad => {
-        const card = document.createElement('article');
-        card.className = 'propiedad-card';
-        
-        const precioData = obtenerPrecioYMoneda(propiedad);
-        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
-        
-        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-        card.innerHTML = `
-            <h3>${nombrePropiedad}</h3>
-            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
-            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
-            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
-        `;
-        contenedor.appendChild(card);
-    });
-}
-
-// ====================================================================
-// VISTA INDIVIDUAL
-// ====================================================================
-
-function mostrarPropiedadIndividual() {
-    const elementos = {
-        contenedor: document.getElementById('detalle-propiedad-contenedor'),
-        titulo: document.getElementById('titulo-propiedad'),
-        ubicacion: document.getElementById('detalles-ubicacion'),
-        presupuesto: document.getElementById('detalles-presupuesto'),
-        dimensiones: document.getElementById('detalles-dimensiones'),
-        dormitorios: document.getElementById('detalles-dormitorios'),
-        banios: document.getElementById('detalles-baños'),
-        mantenimiento: document.getElementById('detalles-mantenimiento'),
-        estado: document.getElementById('detalles-estado'),
-        garaje: document.getElementById('detalles-garaje'),
-        contacto: document.getElementById('detalles-contacto')
-    };
-    
-    if (!elementos.contenedor || !elementos.titulo) {
-        return;
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const idUnico = params.get('id');
-
-    if (!idUnico) {
-        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
-        return;
-    }
-
-    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
-
-    if (!propiedad) {
-        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
-        return;
-    }
-    
-    const precioData = obtenerPrecioYMoneda(propiedad);
-    const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
-    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
-    
-    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
-    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
-    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
-    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
-    
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
-    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    
-    if (elementos.contacto) {
-        if (propiedad[COLUMNA_CONTACTO]) {
-            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
-        } else {
-            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
-        }
-    }
-}
-
-// ====================================================================
-// INICIO DE EJECUCIÓN
-// ====================================================================
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPropiedades);
-} else {
-    cargarPropiedades();
-} : 'S/.';
+        const simbolo = monedaSeleccionada === 'USD' ? '$' : 'S/.';
         const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
         
         let maxVal = parseInt(this.value);
@@ -645,127 +271,7 @@ if (document.readyState === 'loading') {
     
     inputMin.addEventListener('input', function() {
         const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
-        const simbolo = monedaSeleccionada === 'USD' ? '
-
-function configurarFiltros() {
-    const form = document.getElementById('form-filtros');
-    if (form) {
-        form.addEventListener('input', aplicarFiltros);
-        form.addEventListener('change', aplicarFiltros);
-        sincronizarSliders();
-    }
-}
-
-// ====================================================================
-// RENDERIZADO DEL LISTADO
-// ====================================================================
-
-function renderizarListado(listado) {
-    const contenedor = document.getElementById('listado');
-    if (!contenedor) return;
-    
-    contenedor.innerHTML = ''; 
-
-    if (listado.length === 0) {
-        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
-        return;
-    }
-
-    listado.forEach(propiedad => {
-        const card = document.createElement('article');
-        card.className = 'propiedad-card';
-        
-        const precioData = obtenerPrecioYMoneda(propiedad);
-        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
-        
-        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-        card.innerHTML = `
-            <h3>${nombrePropiedad}</h3>
-            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
-            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
-            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
-        `;
-        contenedor.appendChild(card);
-    });
-}
-
-// ====================================================================
-// VISTA INDIVIDUAL
-// ====================================================================
-
-function mostrarPropiedadIndividual() {
-    const elementos = {
-        contenedor: document.getElementById('detalle-propiedad-contenedor'),
-        titulo: document.getElementById('titulo-propiedad'),
-        ubicacion: document.getElementById('detalles-ubicacion'),
-        presupuesto: document.getElementById('detalles-presupuesto'),
-        dimensiones: document.getElementById('detalles-dimensiones'),
-        dormitorios: document.getElementById('detalles-dormitorios'),
-        banios: document.getElementById('detalles-baños'),
-        mantenimiento: document.getElementById('detalles-mantenimiento'),
-        estado: document.getElementById('detalles-estado'),
-        garaje: document.getElementById('detalles-garaje'),
-        contacto: document.getElementById('detalles-contacto')
-    };
-    
-    if (!elementos.contenedor || !elementos.titulo) {
-        return;
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const idUnico = params.get('id');
-
-    if (!idUnico) {
-        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
-        return;
-    }
-
-    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
-
-    if (!propiedad) {
-        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
-        return;
-    }
-    
-    const precioData = obtenerPrecioYMoneda(propiedad);
-    const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
-    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
-    
-    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
-    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
-    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
-    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
-    
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
-    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    
-    if (elementos.contacto) {
-        if (propiedad[COLUMNA_CONTACTO]) {
-            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
-        } else {
-            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
-        }
-    }
-}
-
-// ====================================================================
-// INICIO DE EJECUCIÓN
-// ====================================================================
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPropiedades);
-} else {
-    cargarPropiedades();
-} : 'S/.';
+        const simbolo = monedaSeleccionada === 'USD' ? '$' : 'S/.';
         const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
         
         const val = parseInt(this.value) || 0;
@@ -776,127 +282,7 @@ if (document.readyState === 'loading') {
     
     inputMax.addEventListener('input', function() {
         const monedaSeleccionada = document.querySelector('input[name="moneda"]:checked').value;
-        const simbolo = monedaSeleccionada === 'USD' ? '
-
-function configurarFiltros() {
-    const form = document.getElementById('form-filtros');
-    if (form) {
-        form.addEventListener('input', aplicarFiltros);
-        form.addEventListener('change', aplicarFiltros);
-        sincronizarSliders();
-    }
-}
-
-// ====================================================================
-// RENDERIZADO DEL LISTADO
-// ====================================================================
-
-function renderizarListado(listado) {
-    const contenedor = document.getElementById('listado');
-    if (!contenedor) return;
-    
-    contenedor.innerHTML = ''; 
-
-    if (listado.length === 0) {
-        contenedor.innerHTML = '<p>No se encontraron propiedades que coincidan con los filtros aplicados.</p>';
-        return;
-    }
-
-    listado.forEach(propiedad => {
-        const card = document.createElement('article');
-        card.className = 'propiedad-card';
-        
-        const precioData = obtenerPrecioYMoneda(propiedad);
-        const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
-        
-        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-        const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-        card.innerHTML = `
-            <h3>${nombrePropiedad}</h3>
-            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
-            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
-            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
-        `;
-        contenedor.appendChild(card);
-    });
-}
-
-// ====================================================================
-// VISTA INDIVIDUAL
-// ====================================================================
-
-function mostrarPropiedadIndividual() {
-    const elementos = {
-        contenedor: document.getElementById('detalle-propiedad-contenedor'),
-        titulo: document.getElementById('titulo-propiedad'),
-        ubicacion: document.getElementById('detalles-ubicacion'),
-        presupuesto: document.getElementById('detalles-presupuesto'),
-        dimensiones: document.getElementById('detalles-dimensiones'),
-        dormitorios: document.getElementById('detalles-dormitorios'),
-        banios: document.getElementById('detalles-baños'),
-        mantenimiento: document.getElementById('detalles-mantenimiento'),
-        estado: document.getElementById('detalles-estado'),
-        garaje: document.getElementById('detalles-garaje'),
-        contacto: document.getElementById('detalles-contacto')
-    };
-    
-    if (!elementos.contenedor || !elementos.titulo) {
-        return;
-    }
-    
-    const params = new URLSearchParams(window.location.search);
-    const idUnico = params.get('id');
-
-    if (!idUnico) {
-        elementos.contenedor.innerHTML = '<p>Error: No se ha especificado una propiedad (falta el parámetro ID).</p>';
-        return;
-    }
-
-    const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
-
-    if (!propiedad) {
-        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
-        return;
-    }
-    
-    const precioData = obtenerPrecioYMoneda(propiedad);
-    const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
-    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
-    const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
-
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
-    
-    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
-    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
-    if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
-    if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
-    
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
-    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
-    
-    if (elementos.contacto) {
-        if (propiedad[COLUMNA_CONTACTO]) {
-            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
-        } else {
-            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
-        }
-    }
-}
-
-// ====================================================================
-// INICIO DE EJECUCIÓN
-// ====================================================================
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', cargarPropiedades);
-} else {
-    cargarPropiedades();
-} : 'S/.';
+        const simbolo = monedaSeleccionada === 'USD' ? '$' : 'S/.';
         const maxValor = monedaSeleccionada === 'USD' ? 500000 : 1875000;
         
         const val = parseInt(this.value) || maxValor;
@@ -937,16 +323,15 @@ function renderizarListado(listado) {
         const precioData = obtenerPrecioYMoneda(propiedad);
         const precioFormateado = convertirADivisa(precioData.valor, precioData.moneda);
         
-        const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+        const nombrePropiedad = (propiedad[COLUMNA_TIPO] || 'Inmueble') + ' en ' + (propiedad[COLUMNA_UBICACION] || 'Lima');
         const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
 
-        card.innerHTML = `
-            <h3>${nombrePropiedad}</h3>
-            <p class="precio">🏠 ${propiedad[COLUMNA_PROPOSITO] || 'Venta'}: <strong>${precioFormateado}</strong></p>
-            <p>📐 ${propiedad[COLUMNA_M2] || 'N/D'} m² | 🛏️ ${propiedad[COLUMNA_DORM] || 'N/D'} | 🛁 ${propiedad[COLUMNA_BANIOS] || 'N/D'}</p>
-            <p>📞 <a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>
-            <a href="propiedad.html?id=${propiedad[COLUMNA_ID]}" class="boton-detalle">Ver Detalles</a>
-        `;
+        card.innerHTML = '<h3>' + nombrePropiedad + '</h3>' +
+            '<p class="precio">🏠 ' + (propiedad[COLUMNA_PROPOSITO] || 'Venta') + ': <strong>' + precioFormateado + '</strong></p>' +
+            '<p>📐 ' + (propiedad[COLUMNA_M2] || 'N/D') + ' m² | 🛏️ ' + (propiedad[COLUMNA_DORM] || 'N/D') + ' | 🛁 ' + (propiedad[COLUMNA_BANIOS] || 'N/D') + '</p>' +
+            '<p>📞 <a href="' + enlaceWhatsApp + '" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>' +
+            '<a href="propiedad.html?id=' + propiedad[COLUMNA_ID] + '" class="boton-detalle">Ver Detalles</a>';
+        
         contenedor.appendChild(card);
     });
 }
@@ -985,31 +370,31 @@ function mostrarPropiedadIndividual() {
     const propiedad = PROPIEDADES.find(p => String(p[COLUMNA_ID]) === idUnico);
 
     if (!propiedad) {
-        elementos.contenedor.innerHTML = `<p>Error: No se encontró la propiedad con el ID: ${idUnico}</p>`;
+        elementos.contenedor.innerHTML = '<p>Error: No se encontró la propiedad con el ID: ' + idUnico + '</p>';
         return;
     }
     
     const precioData = obtenerPrecioYMoneda(propiedad);
     const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? `S/. ${propiedad.mantenimiento}` : 'No aplica';
-    const nombrePropiedad = `${propiedad[COLUMNA_TIPO] || 'Inmueble'} en ${propiedad[COLUMNA_UBICACION] || 'Lima'}`;
+    const mant = propiedad.mantenimiento ? 'S/. ' + propiedad.mantenimiento : 'No aplica';
+    const nombrePropiedad = (propiedad[COLUMNA_TIPO] || 'Inmueble') + ' en ' + (propiedad[COLUMNA_UBICACION] || 'Lima');
     const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
 
-    elementos.titulo.textContent = `${propiedad[COLUMNA_PROPOSITO] || 'Propiedad'} - ${nombrePropiedad}`;
+    elementos.titulo.textContent = (propiedad[COLUMNA_PROPOSITO] || 'Propiedad') + ' - ' + nombrePropiedad;
     
-    if (elementos.ubicacion) elementos.ubicacion.textContent = `${propiedad.direccion || 'N/D'}, ${propiedad[COLUMNA_UBICACION] || 'N/D'}`;
+    if (elementos.ubicacion) elementos.ubicacion.textContent = (propiedad.direccion || 'N/D') + ', ' + (propiedad[COLUMNA_UBICACION] || 'N/D');
     if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = `${propiedad[COLUMNA_M2] || 'N/D'} m²`;
+    if (elementos.dimensiones) elementos.dimensiones.textContent = (propiedad[COLUMNA_M2] || 'N/D') + ' m²';
     if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
     if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
     
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = `Costo de Mantenimiento: ${mant}`;
-    if (elementos.estado) elementos.estado.textContent = `Estado/Propósito: ${propiedad[COLUMNA_PROPOSITO] || 'N/D'}`;
-    if (elementos.garaje) elementos.garaje.textContent = `Estacionamiento: ${propiedad.garaje_cantidad || '0'}`;
+    if (elementos.mantenimiento) elementos.mantenimiento.textContent = 'Costo de Mantenimiento: ' + mant;
+    if (elementos.estado) elementos.estado.textContent = 'Estado/Propósito: ' + (propiedad[COLUMNA_PROPOSITO] || 'N/D');
+    if (elementos.garaje) elementos.garaje.textContent = 'Estacionamiento: ' + (propiedad.garaje_cantidad || '0');
     
     if (elementos.contacto) {
         if (propiedad[COLUMNA_CONTACTO]) {
-            elementos.contacto.innerHTML = `<a href="${enlaceWhatsApp}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ${propiedad[COLUMNA_CONTACTO]} (WhatsApp)</a>`;
+            elementos.contacto.innerHTML = '<a href="' + enlaceWhatsApp + '" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ' + propiedad[COLUMNA_CONTACTO] + ' (WhatsApp)</a>';
         } else {
             elementos.contacto.textContent = 'Consultar con la inmobiliaria';
         }
