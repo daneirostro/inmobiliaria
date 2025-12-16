@@ -2,7 +2,7 @@
 // CONFIGURACIÓN CLAVE Y CONSTANTES DEL CSV
 // ====================================================================
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8KKYArUaGlzi3_-apBixMuMFym52t1RZ1K80VSnWUza8NHk14AanEuXAiz0rQVvVOBWjd5oz8IfbN/pub?output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiTXv6ObJDm5Z07dXZM7THkrFe6JQW5GE8pr4Tr2clKEZYAnga_EHCCSqumim4iLTX-Ul5dpxqDQ2S/pub?gid=1388338922&single=true&output=csv"; 
 
 let PROPIEDADES = [];
 const DELIMITADOR_CSV = ',';
@@ -80,7 +80,24 @@ function obtenerImagenes(propiedad) {
         return ['https://via.placeholder.com/400x300?text=Sin+Imagen'];
     }
     
-    return urls;
+    // Convertir URLs de Google Drive al formato correcto
+    return urls.map(function(url) {
+        return convertirURLGoogleDrive(url);
+    });
+}
+
+function convertirURLGoogleDrive(url) {
+    // Si es una URL de Google Drive en formato /file/d/ID/view, convertirla
+    const regexDrive = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+    const match = url.match(regexDrive);
+    
+    if (match && match[1]) {
+        const fileId = match[1];
+        return 'https://drive.google.com/uc?export=view&id=' + fileId;
+    }
+    
+    // Si ya está en formato correcto o es otra URL, devolverla tal cual
+    return url;
 }
 
 function obtenerImagenPrincipal(propiedad) {
