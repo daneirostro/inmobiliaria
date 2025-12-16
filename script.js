@@ -17,6 +17,7 @@ const COLUMNA_DORM = 'dormitorios';
 const COLUMNA_BANIOS = 'baños';
 const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_PROPOSITO = 'proposito';
+const COLUMNA_IMAGENES = 'imagenes';
 
 // ====================================================================
 // FUNCIONES UTILITARIAS
@@ -62,6 +63,29 @@ function generarEnlaceWhatsApp(telefono, nombrePropiedad) {
     
     const mensaje = encodeURIComponent('Hola, estoy interesado en la propiedad: ' + nombrePropiedad);
     return 'https://wa.me/' + numeroLimpio + '?text=' + mensaje;
+}
+
+function obtenerImagenes(propiedad) {
+    const imagenesStr = propiedad[COLUMNA_IMAGENES];
+    
+    if (!imagenesStr) {
+        return ['https://via.placeholder.com/400x300?text=Sin+Imagen'];
+    }
+    
+    // Si hay múltiples URLs separadas por coma, pipe o punto y coma
+    const separadores = /[,|;]/;
+    const urls = String(imagenesStr).split(separadores).map(url => url.trim()).filter(url => url);
+    
+    if (urls.length === 0) {
+        return ['https://via.placeholder.com/400x300?text=Sin+Imagen'];
+    }
+    
+    return urls;
+}
+
+function obtenerImagenPrincipal(propiedad) {
+    const imagenes = obtenerImagenes(propiedad);
+    return imagenes[0];
 }
 
 // ====================================================================
@@ -325,12 +349,18 @@ function renderizarListado(listado) {
         
         const nombrePropiedad = (propiedad[COLUMNA_TIPO] || 'Inmueble') + ' en ' + (propiedad[COLUMNA_UBICACION] || 'Lima');
         const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+        const imagenPrincipal = obtenerImagenPrincipal(propiedad);
 
-        card.innerHTML = '<h3>' + nombrePropiedad + '</h3>' +
+        card.innerHTML = '<div class="propiedad-imagen">' +
+            '<img src="' + imagenPrincipal + '" alt="' + nombrePropiedad + '" loading="lazy">' +
+            '</div>' +
+            '<div class="propiedad-info">' +
+            '<h3>' + nombrePropiedad + '</h3>' +
             '<p class="precio">🏠 ' + (propiedad[COLUMNA_PROPOSITO] || 'Venta') + ': <strong>' + precioFormateado + '</strong></p>' +
             '<p>📐 ' + (propiedad[COLUMNA_M2] || 'N/D') + ' m² | 🛏️ ' + (propiedad[COLUMNA_DORM] || 'N/D') + ' | 🛁 ' + (propiedad[COLUMNA_BANIOS] || 'N/D') + '</p>' +
             '<p>📞 <a href="' + enlaceWhatsApp + '" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>' +
-            '<a href="propiedad.html?id=' + propiedad[COLUMNA_ID] + '" class="boton-detalle">Ver Detalles</a>';
+            '<a href="propiedad.html?id=' + propiedad[COLUMNA_ID] + '" class="boton-detalle">Ver Detalles</a>' +
+            '</div>';
         
         contenedor.appendChild(card);
     });
@@ -379,8 +409,49 @@ function mostrarPropiedadIndividual() {
     const mant = propiedad.mantenimiento ? 'S/. ' + propiedad.mantenimiento : 'No aplica';
     const nombrePropiedad = (propiedad[COLUMNA_TIPO] || 'Inmueble') + ' en ' + (propiedad[COLUMNA_UBICACION] || 'Lima');
     const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
+    const imagenes = obtenerImagenes(propiedad);
 
     elementos.titulo.textContent = (propiedad[COLUMNA_PROPOSITO] || 'Propiedad') + ' - ' + nombrePropiedad;
+    
+    // Renderizar galería de imágenes
+    const galeriaContainer = document.getElementById('galeria-imagenes');
+    if (galeriaContainer) {
+        galeriaContainer.innerHTML = '';
+        
+        if (imagenes.length === 1) {
+            galeriaContainer.innerHTML = '<img src="' + imagenes[0] + '" alt="' + nombrePropiedad + '" class="imagen-principal">';
+        } else {
+            let galeriaHTML = '<div class="imagen-principal-container">' +
+                '<img src="' + imagenes[0] + '" alt="' + nombrePropiedad + '" class="imagen-principal" id="imagen-activa">' +
+                '</div>' +
+                '<div class="miniaturas">';
+            
+            imagenes.forEach(function(img, index) {
+                galeriaHTML += '<img src="' + img + '" alt="Imagen ' + (index + 1) + '" class="miniatura" data-index="' + index + '">';
+            });
+            
+            galeriaHTML += '</div>';
+            galeriaContainer.innerHTML = galeriaHTML;
+            
+            // Agregar funcionalidad para cambiar imagen principal
+            const miniaturas = galeriaContainer.querySelectorAll('.miniatura');
+            const imagenActiva = document.getElementById('imagen-activa');
+            
+            miniaturas.forEach(function(miniatura) {
+                miniatura.addEventListener('click', function() {
+                    const index = this.getAttribute('data-index');
+                    imagenActiva.src = imagenes[index];
+                    
+                    miniaturas.forEach(m => m.classList.remove('activa'));
+                    this.classList.add('activa');
+                });
+            });
+            
+            if (miniaturas.length > 0) {
+                miniaturas[0].classList.add('activa');
+            }
+        }
+    }
     
     if (elementos.ubicacion) elementos.ubicacion.textContent = (propiedad.direccion || 'N/D') + ', ' + (propiedad[COLUMNA_UBICACION] || 'N/D');
     if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
