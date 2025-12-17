@@ -96,6 +96,15 @@ function convertirURLGoogleDrive(url) {
         return 'https://drive.google.com/uc?export=view&id=' + fileId;
     }
     
+    // Convertir URLs de Imgur al formato directo
+    const regexImgur = /imgur\.com\/([a-zA-Z0-9]+)$/;
+    const matchImgur = url.match(regexImgur);
+    
+    if (matchImgur && matchImgur[1]) {
+        const imgurId = matchImgur[1];
+        return 'https://i.imgur.com/' + imgurId + '.jpg';
+    }
+    
     // Si ya está en formato correcto o es otra URL, devolverla tal cual
     return url;
 }
