@@ -552,3 +552,32 @@ footer {
     }
 }
 ```
+
+/* Estilos para secciones de información */
+.seccion-info {
+    margin: 20px 0;
+}
+
+.seccion-info h3 {
+    color: #007bff;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007bff;
+}
+
+.seccion-info p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+.seccion-info p strong {
+    display: inline-block;
+    min-width: 180px;
+    color: #333;
+}
+
+#detalles-caracteristicas,
+#detalles-documentacion {
+    line-height: 1.8;
+    color: #555;
+}
