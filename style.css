@@ -624,3 +624,98 @@ footer {
     color: #555;
     margin-left: 0;
 }
+
+/* ============================================
+   BOTONES PARA COMPARTIR EN REDES SOCIALES
+   ============================================ */
+
+.compartir-redes {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.compartir-redes p {
+    margin: 0 0 15px 0;
+    font-weight: bold;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.botones-compartir {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-red {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-red:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.btn-red svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Colores específicos por red social */
+.btn-red.whatsapp {
+    background: #25D366;
+}
+
+.btn-red.whatsapp:hover {
+    background: #128C7E;
+}
+
+.btn-red.facebook {
+    background: #1877F2;
+}
+
+.btn-red.facebook:hover {
+    background: #145DBF;
+}
+
+.btn-red.twitter {
+    background: #000000;
+}
+
+.btn-red.twitter:hover {
+    background: #333333;
+}
+
+.btn-red.copiar {
+    background: #6c757d;
+}
+
+.btn-red.copiar:hover {
+    background: #545b62;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .botones-compartir {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-red {
+        width: 100%;
+        justify-content: center;
+    }
+}
