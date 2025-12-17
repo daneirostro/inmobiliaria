@@ -428,7 +428,6 @@ function mostrarPropiedadIndividual() {
         areasComunes: document.getElementById('detalles-areas-comunes'),
         antiguedad: document.getElementById('detalles-antiguedad'),
         caracteristicas: document.getElementById('detalles-caracteristicas'),
-        documentacion: document.getElementById('detalles-documentacion'),
         contacto: document.getElementById('detalles-contacto'),
         email: document.getElementById('detalles-email')
     };
@@ -523,9 +522,8 @@ function mostrarPropiedadIndividual() {
     if (elementos.areasComunes) elementos.areasComunes.textContent = propiedad[COLUMNA_AREAS_COMUNES] || 'No especificado';
     if (elementos.antiguedad) elementos.antiguedad.textContent = propiedad[COLUMNA_ANTIGUEDAD] || 'No especificado';
     
-    // Llenar características adicionales y documentación
+    // Llenar características adicionales
     if (elementos.caracteristicas) elementos.caracteristicas.textContent = propiedad[COLUMNA_CARACTERISTICAS] || 'No especificado';
-    if (elementos.documentacion) elementos.documentacion.textContent = propiedad[COLUMNA_DOCUMENTACION] || 'No especificado';
     
     // Llenar contacto
     if (elementos.contacto) {
