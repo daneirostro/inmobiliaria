@@ -2,7 +2,7 @@
 // CONFIGURACIÓN CLAVE Y CONSTANTES DEL CSV
 // ====================================================================
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8KKYArUaGlzi3_-apBixMuMFym52t1RZ1K80VSnWUza8NHk14AanEuXAiz0rQVvVOBWjd5oz8IfbN/pub?gid=1956281180&single=true&output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiTXv6ObJDm5Z07dXZM7THkrFe6JQW5GE8pr4Tr2clKEZYAnga_EHCCSqumim4iLTX-Ul5dpxqDQ2S/pub?gid=1388338922&single=true&output=csv"; 
 
 let PROPIEDADES = [];
 const DELIMITADOR_CSV = ',';
@@ -535,6 +535,75 @@ function mostrarPropiedadIndividual() {
     }
     
     if (elementos.email) elementos.email.textContent = propiedad[COLUMNA_CORREO] || 'No especificado';
+    
+    // Configurar botones para compartir
+    configurarBotonesCompartir(nombrePropiedad, precio);
+}
+
+function configurarBotonesCompartir(nombrePropiedad, precio) {
+    const urlActual = window.location.href;
+    const textoCompartir = 'Mira esta propiedad: ' + nombrePropiedad + ' - ' + precio;
+    const textoEncoded = encodeURIComponent(textoCompartir);
+    const urlEncoded = encodeURIComponent(urlActual);
+    
+    // WhatsApp
+    const btnWhatsApp = document.getElementById('btn-whatsapp');
+    if (btnWhatsApp) {
+        btnWhatsApp.href = 'https://wa.me/?text=' + textoEncoded + ' ' + urlEncoded;
+    }
+    
+    // Facebook
+    const btnFacebook = document.getElementById('btn-facebook');
+    if (btnFacebook) {
+        btnFacebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + urlEncoded;
+    }
+    
+    // Twitter
+    const btnTwitter = document.getElementById('btn-twitter');
+    if (btnTwitter) {
+        btnTwitter.href = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded;
+    }
+    
+    // Copiar enlace
+    const btnCopiar = document.getElementById('btn-copiar');
+    if (btnCopiar) {
+        btnCopiar.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(urlActual).then(function() {
+                    const textoOriginal = btnCopiar.innerHTML;
+                    btnCopiar.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> ¡Copiado!';
+                    btnCopiar.style.background = '#28a745';
+                    
+                    setTimeout(function() {
+                        btnCopiar.innerHTML = textoOriginal;
+                        btnCopiar.style.background = '';
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Error al copiar:', err);
+                    alert('No se pudo copiar el enlace');
+                });
+            } else {
+                // Fallback para navegadores antiguos
+                const inputTemp = document.createElement('input');
+                inputTemp.value = urlActual;
+                document.body.appendChild(inputTemp);
+                inputTemp.select();
+                document.execCommand('copy');
+                document.body.removeChild(inputTemp);
+                
+                const textoOriginal = btnCopiar.innerHTML;
+                btnCopiar.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> ¡Copiado!';
+                btnCopiar.style.background = '#28a745';
+                
+                setTimeout(function() {
+                    btnCopiar.innerHTML = textoOriginal;
+                    btnCopiar.style.background = '';
+                }, 2000);
+            }
+        });
+    }
 }
 
 // ====================================================================
