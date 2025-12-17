@@ -581,3 +581,46 @@ footer {
     line-height: 1.8;
     color: #555;
 }
+
+/* Título centrado */
+#titulo-propiedad {
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* Estilos para secciones de información - CON ALINEACIÓN CORRECTA */
+.seccion-info {
+    margin: 20px 0;
+}
+
+.seccion-info h3 {
+    color: #007bff;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007bff;
+}
+
+.seccion-info p {
+    margin: 10px 0;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+}
+
+.seccion-info p strong {
+    min-width: 180px;
+    flex-shrink: 0;
+    color: #333;
+    padding-right: 10px;
+}
+
+.seccion-info p span {
+    flex: 1;
+    word-wrap: break-word;
+}
+
+#detalles-caracteristicas {
+    line-height: 1.8;
+    color: #555;
+    margin-left: 0;
+}
