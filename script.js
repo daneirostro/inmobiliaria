@@ -2,21 +2,34 @@
 // CONFIGURACIÓN CLAVE Y CONSTANTES DEL CSV
 // ====================================================================
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8KKYArUaGlzi3_-apBixMuMFym52t1RZ1K80VSnWUza8NHk14AanEuXAiz0rQVvVOBWjd5oz8IfbN/pub?gid=1956281180&single=true&output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiTXv6ObJDm5Z07dXZM7THkrFe6JQW5GE8pr4Tr2clKEZYAnga_EHCCSqumim4iLTX-Ul5dpxqDQ2S/pub?gid=1388338922&single=true&output=csv"; 
+
 let PROPIEDADES = [];
 const DELIMITADOR_CSV = ',';
 
 const COLUMNA_ID = 'id'; 
+const COLUMNA_VENDEDOR = 'vendedor';
 const COLUMNA_TIPO = 'tipo_propiedad';
+const COLUMNA_DIRECCION = 'direccion';
 const COLUMNA_UBICACION = 'distrito';
+const COLUMNA_REFERENCIAS = 'referencias';
+const COLUMNA_PROPOSITO = 'proposito';
 const COLUMNA_PRECIO_USD = 'presupuesto_dolares';
 const COLUMNA_PRECIO_SOLES = 'presupuesto_soles';
+const COLUMNA_MANTENIMIENTO = 'mantenimiento';
 const COLUMNA_M2 = 'area_m2';
 const COLUMNA_DORM = 'dormitorios';
 const COLUMNA_BANIOS = 'baños';
+const COLUMNA_PISO_UBICACION = 'piso_ubicacion';
+const COLUMNA_PISOS_EDIFICIO = 'pisos_edificio';
+const COLUMNA_GARAJE = 'garaje_cantidad';
+const COLUMNA_AREAS_COMUNES = 'areas_comunes';
+const COLUMNA_CARACTERISTICAS = 'caracteristicas';
+const COLUMNA_ANTIGUEDAD = 'antiguedad';
+const COLUMNA_DOCUMENTACION = 'documentacion';
 const COLUMNA_CONTACTO = 'contacto';
-const COLUMNA_PROPOSITO = 'proposito';
-const COLUMNA_IMAGENES = 'imagenes';
+const COLUMNA_CORREO = 'correo';
+const COLUMNA_IMAGENES = 'imagenes'; // Cambiar temporalmente a 'correo' para probar
 
 // ====================================================================
 // FUNCIONES UTILITARIAS
@@ -399,15 +412,25 @@ function mostrarPropiedadIndividual() {
     const elementos = {
         contenedor: document.getElementById('detalle-propiedad-contenedor'),
         titulo: document.getElementById('titulo-propiedad'),
-        ubicacion: document.getElementById('detalles-ubicacion'),
-        presupuesto: document.getElementById('detalles-presupuesto'),
-        dimensiones: document.getElementById('detalles-dimensiones'),
-        dormitorios: document.getElementById('detalles-dormitorios'),
-        banios: document.getElementById('detalles-baños'),
+        vendedor: document.getElementById('detalles-vendedor'),
+        direccion: document.getElementById('detalles-direccion'),
+        distrito: document.getElementById('detalles-distrito'),
+        referencias: document.getElementById('detalles-referencias'),
+        proposito: document.getElementById('detalles-proposito'),
+        precio: document.getElementById('detalles-precio'),
         mantenimiento: document.getElementById('detalles-mantenimiento'),
-        estado: document.getElementById('detalles-estado'),
+        area: document.getElementById('detalles-area'),
+        dormitorios: document.getElementById('detalles-dormitorios'),
+        banios: document.getElementById('detalles-banios'),
+        pisoUbicacion: document.getElementById('detalles-piso-ubicacion'),
+        pisosEdificio: document.getElementById('detalles-pisos-edificio'),
         garaje: document.getElementById('detalles-garaje'),
-        contacto: document.getElementById('detalles-contacto')
+        areasComunes: document.getElementById('detalles-areas-comunes'),
+        antiguedad: document.getElementById('detalles-antiguedad'),
+        caracteristicas: document.getElementById('detalles-caracteristicas'),
+        documentacion: document.getElementById('detalles-documentacion'),
+        contacto: document.getElementById('detalles-contacto'),
+        email: document.getElementById('detalles-email')
     };
     
     if (!elementos.contenedor || !elementos.titulo) {
@@ -431,7 +454,6 @@ function mostrarPropiedadIndividual() {
     
     const precioData = obtenerPrecioYMoneda(propiedad);
     const precio = convertirADivisa(precioData.valor, precioData.moneda);
-    const mant = propiedad.mantenimiento ? 'S/. ' + propiedad.mantenimiento : 'No aplica';
     const nombrePropiedad = (propiedad[COLUMNA_TIPO] || 'Inmueble') + ' en ' + (propiedad[COLUMNA_UBICACION] || 'Lima');
     const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
     const imagenes = obtenerImagenes(propiedad);
@@ -458,7 +480,6 @@ function mostrarPropiedadIndividual() {
             galeriaHTML += '</div>';
             galeriaContainer.innerHTML = galeriaHTML;
             
-            // Agregar funcionalidad para cambiar imagen principal
             const miniaturas = galeriaContainer.querySelectorAll('.miniatura');
             const imagenActiva = document.getElementById('imagen-activa');
             
@@ -478,23 +499,44 @@ function mostrarPropiedadIndividual() {
         }
     }
     
-    if (elementos.ubicacion) elementos.ubicacion.textContent = (propiedad.direccion || 'N/D') + ', ' + (propiedad[COLUMNA_UBICACION] || 'N/D');
-    if (elementos.presupuesto) elementos.presupuesto.textContent = precio;
-    if (elementos.dimensiones) elementos.dimensiones.textContent = (propiedad[COLUMNA_M2] || 'N/D') + ' m²';
+    // Llenar información general
+    if (elementos.vendedor) elementos.vendedor.textContent = propiedad[COLUMNA_VENDEDOR] || 'No especificado';
+    if (elementos.direccion) elementos.direccion.textContent = propiedad[COLUMNA_DIRECCION] || 'No especificado';
+    if (elementos.distrito) elementos.distrito.textContent = propiedad[COLUMNA_UBICACION] || 'No especificado';
+    if (elementos.referencias) elementos.referencias.textContent = propiedad[COLUMNA_REFERENCIAS] || 'No especificado';
+    if (elementos.proposito) elementos.proposito.textContent = propiedad[COLUMNA_PROPOSITO] || 'No especificado';
+    
+    // Llenar información económica
+    if (elementos.precio) elementos.precio.textContent = precio;
+    if (elementos.mantenimiento) {
+        const mant = propiedad[COLUMNA_MANTENIMIENTO] ? 'S/. ' + propiedad[COLUMNA_MANTENIMIENTO] : 'No aplica';
+        elementos.mantenimiento.textContent = mant;
+    }
+    
+    // Llenar características de la propiedad
+    if (elementos.area) elementos.area.textContent = (propiedad[COLUMNA_M2] || 'N/D') + ' m²';
     if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
     if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
+    if (elementos.pisoUbicacion) elementos.pisoUbicacion.textContent = propiedad[COLUMNA_PISO_UBICACION] || 'N/D';
+    if (elementos.pisosEdificio) elementos.pisosEdificio.textContent = propiedad[COLUMNA_PISOS_EDIFICIO] || 'N/D';
+    if (elementos.garaje) elementos.garaje.textContent = propiedad[COLUMNA_GARAJE] || '0';
+    if (elementos.areasComunes) elementos.areasComunes.textContent = propiedad[COLUMNA_AREAS_COMUNES] || 'No especificado';
+    if (elementos.antiguedad) elementos.antiguedad.textContent = propiedad[COLUMNA_ANTIGUEDAD] || 'No especificado';
     
-    if (elementos.mantenimiento) elementos.mantenimiento.textContent = 'Costo de Mantenimiento: ' + mant;
-    if (elementos.estado) elementos.estado.textContent = 'Estado/Propósito: ' + (propiedad[COLUMNA_PROPOSITO] || 'N/D');
-    if (elementos.garaje) elementos.garaje.textContent = 'Estacionamiento: ' + (propiedad.garaje_cantidad || '0');
+    // Llenar características adicionales y documentación
+    if (elementos.caracteristicas) elementos.caracteristicas.textContent = propiedad[COLUMNA_CARACTERISTICAS] || 'No especificado';
+    if (elementos.documentacion) elementos.documentacion.textContent = propiedad[COLUMNA_DOCUMENTACION] || 'No especificado';
     
+    // Llenar contacto
     if (elementos.contacto) {
         if (propiedad[COLUMNA_CONTACTO]) {
             elementos.contacto.innerHTML = '<a href="' + enlaceWhatsApp + '" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ' + propiedad[COLUMNA_CONTACTO] + ' (WhatsApp)</a>';
         } else {
-            elementos.contacto.textContent = 'Consultar con la inmobiliaria';
+            elementos.contacto.textContent = 'No especificado';
         }
     }
+    
+    if (elementos.email) elementos.email.textContent = propiedad[COLUMNA_CORREO] || 'No especificado';
 }
 
 // ====================================================================
