@@ -2,7 +2,7 @@
 // CONFIGURACIÓN CLAVE Y CONSTANTES DEL CSV
 // ====================================================================
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8KKYArUaGlzi3_-apBixMuMFym52t1RZ1K80VSnWUza8NHk14AanEuXAiz0rQVvVOBWjd5oz8IfbN/pub?gid=1956281180&single=true&output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiTXv6ObJDm5Z07dXZM7THkrFe6JQW5GE8pr4Tr2clKEZYAnga_EHCCSqumim4iLTX-Ul5dpxqDQ2S/pub?gid=1388338922&single=true&output=csv"; 
 
 let PROPIEDADES = [];
 const DELIMITADOR_CSV = ',';
@@ -186,6 +186,8 @@ async function cargarPropiedades() {
         if (esPaginaListado && !esPaginaIndividual) {
             renderizarListado(PROPIEDADES);
             configurarFiltros();
+            propiedadesFiltradas = PROPIEDADES;
+            propiedadesMostradas = 0;
         } else if (esPaginaIndividual && !esPaginaListado) {
             mostrarPropiedadIndividual();
         }
@@ -253,6 +255,8 @@ function aplicarFiltros() {
         return true; 
     });
 
+    propiedadesFiltradas = resultados;
+    propiedadesMostradas = 0;
     renderizarListado(resultados);
 }
 
@@ -364,13 +368,14 @@ function configurarFiltros() {
 }
 
 // ====================================================================
-// RENDERIZADO DEL LISTADO
+// RENDERIZADO DEL LISTADO CON LAZY LOADING
 // ====================================================================
 
 function renderizarListado(listado) {
     const contenedor = document.getElementById('listado');
     if (!contenedor) return;
     
+    // Limpiar el contenedor
     contenedor.innerHTML = ''; 
 
     if (listado.length === 0) {
@@ -378,7 +383,31 @@ function renderizarListado(listado) {
         return;
     }
 
-    listado.forEach(propiedad => {
+    // Guardar las propiedades filtradas y resetear contador
+    propiedadesFiltradas = listado;
+    propiedadesMostradas = 0;
+    
+    // Renderizar las primeras propiedades
+    cargarMasPropiedades();
+}
+
+function cargarMasPropiedades() {
+    const contenedor = document.getElementById('listado');
+    if (!contenedor) return;
+    
+    // Remover el botón "Cargar más" si existe
+    const btnCargarMasExistente = document.getElementById('btn-cargar-mas');
+    if (btnCargarMasExistente) {
+        btnCargarMasExistente.remove();
+    }
+    
+    // Calcular cuántas propiedades mostrar
+    const inicio = propiedadesMostradas;
+    const fin = Math.min(inicio + PROPIEDADES_POR_PAGINA, propiedadesFiltradas.length);
+    
+    // Renderizar las propiedades de este lote
+    for (let i = inicio; i < fin; i++) {
+        const propiedad = propiedadesFiltradas[i];
         const card = document.createElement('article');
         card.className = 'propiedad-card';
         
@@ -401,7 +430,27 @@ function renderizarListado(listado) {
             '</div>';
         
         contenedor.appendChild(card);
-    });
+    }
+    
+    // Actualizar contador
+    propiedadesMostradas = fin;
+    
+    // Si hay más propiedades, mostrar el botón "Cargar más"
+    if (propiedadesMostradas < propiedadesFiltradas.length) {
+        const btnCargarMas = document.createElement('div');
+        btnCargarMas.id = 'btn-cargar-mas';
+        btnCargarMas.className = 'btn-cargar-mas-container';
+        btnCargarMas.innerHTML = '<button onclick="cargarMasPropiedades()" class="btn-cargar-mas">' +
+            'Cargar más propiedades (' + (propiedadesFiltradas.length - propiedadesMostradas) + ' restantes)' +
+            '</button>';
+        contenedor.appendChild(btnCargarMas);
+    } else {
+        // Si ya se mostraron todas, agregar mensaje
+        const mensajeFin = document.createElement('div');
+        mensajeFin.className = 'mensaje-fin';
+        mensajeFin.innerHTML = '<p>✓ Se mostraron todas las propiedades (' + propiedadesFiltradas.length + ' en total)</p>';
+        contenedor.appendChild(mensajeFin);
+    }
 }
 
 // ====================================================================
