@@ -388,7 +388,9 @@ function renderizarListado(listado) {
     const contenedor = document.getElementById('listado');
     if (!contenedor) return;
     
-    // Limpiar el contenedor
+    console.log('renderizarListado llamado con', listado.length, 'propiedades');
+    
+    // Limpiar el contenedor completamente
     contenedor.innerHTML = ''; 
 
     if (listado.length === 0) {
@@ -400,6 +402,8 @@ function renderizarListado(listado) {
     propiedadesFiltradas = listado;
     propiedadesMostradas = 0;
     
+    console.log('Reseteado a 0. Llamando a cargarMasPropiedades');
+    
     // Renderizar las primeras propiedades
     cargarMasPropiedades();
 }
@@ -408,9 +412,9 @@ function cargarMasPropiedades() {
     const contenedor = document.getElementById('listado');
     if (!contenedor) return;
     
-    console.log('Cargando más. Mostradas actualmente:', propiedadesMostradas, 'Total:', propiedadesFiltradas.length);
+    console.log('cargarMasPropiedades - Mostradas:', propiedadesMostradas, 'Total:', propiedadesFiltradas.length);
     
-    // Remover el botón "Cargar más" si existe
+    // Remover el botón "Cargar más" si existe (sin limpiar las cards)
     const btnCargarMasExistente = document.getElementById('btn-cargar-mas');
     if (btnCargarMasExistente) {
         btnCargarMasExistente.remove();
@@ -464,7 +468,7 @@ function cargarMasPropiedades() {
     // Actualizar contador DESPUÉS de renderizar
     propiedadesMostradas = fin;
     
-    console.log('Ahora mostradas:', propiedadesMostradas);
+    console.log('Actualizado propiedadesMostradas a:', propiedadesMostradas);
     
     // Si hay más propiedades, mostrar el botón "Cargar más"
     if (propiedadesMostradas < propiedadesFiltradas.length) {
@@ -473,15 +477,18 @@ function cargarMasPropiedades() {
         btnCargarMas.className = 'btn-cargar-mas-container';
         
         const boton = document.createElement('button');
-        boton.type = 'button'; // IMPORTANTE: Evita que actúe como submit
+        boton.type = 'button';
         boton.className = 'btn-cargar-mas';
         boton.textContent = 'Cargar más propiedades (' + (propiedadesFiltradas.length - propiedadesMostradas) + ' restantes)';
-        boton.addEventListener('click', function(e) {
+        
+        // Usar closure para capturar el valor actual
+        boton.onclick = function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Click en cargar más. Estado antes:', propiedadesMostradas);
+            console.log('Click detectado. propiedadesMostradas antes del click:', propiedadesMostradas);
             cargarMasPropiedades();
-        });
+            return false;
+        };
         
         btnCargarMas.appendChild(boton);
         contenedor.appendChild(btnCargarMas);
