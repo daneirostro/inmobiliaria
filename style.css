@@ -719,3 +719,67 @@ footer {
         justify-content: center;
     }
 }
+
+/* ============================================
+   BOTÓN CARGAR MÁS (LAZY LOADING)
+   ============================================ */
+
+.btn-cargar-mas-container {
+    text-align: center;
+    margin: 40px 0;
+    padding: 20px;
+}
+
+.btn-cargar-mas {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-cargar-mas:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-cargar-mas:active {
+    transform: translateY(-1px);
+}
+
+.mensaje-fin {
+    text-align: center;
+    margin: 40px 0;
+    padding: 20px;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 10px;
+    color: #155724;
+}
+
+.mensaje-fin p {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.05em;
+}
+
+/* Animación suave al cargar nuevas propiedades */
+.propiedad-card {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
