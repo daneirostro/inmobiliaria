@@ -2,7 +2,7 @@
 // CONFIGURACIÓN CLAVE Y CONSTANTES DEL CSV
 // ====================================================================
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8KKYArUaGlzi3_-apBixMuMFym52t1RZ1K80VSnWUza8NHk14AanEuXAiz0rQVvVOBWjd5oz8IfbN/pub?gid=1956281180&single=true&output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiTXv6ObJDm5Z07dXZM7THkrFe6JQW5GE8pr4Tr2clKEZYAnga_EHCCSqumim4iLTX-Ul5dpxqDQ2S/pub?gid=1388338922&single=true&output=csv"; 
 
 let PROPIEDADES = [];
 const DELIMITADOR_CSV = ',';
@@ -30,11 +30,6 @@ const COLUMNA_DOCUMENTACION = 'documentacion';
 const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_CORREO = 'correo';
 const COLUMNA_IMAGENES = 'imagenes'; // Cambiar temporalmente a 'correo' para probar
-
-// Variables para paginación
-let propiedadesFiltradas = [];
-let propiedadesMostradas = 0;
-const PROPIEDADES_POR_PAGINA = 12;
 
 // ====================================================================
 // FUNCIONES UTILITARIAS
@@ -366,7 +361,15 @@ function sincronizarSliders() {
 function configurarFiltros() {
     const form = document.getElementById('form-filtros');
     if (form) {
-        form.addEventListener('input', aplicarFiltros);
+        // Usar debounce para evitar llamadas excesivas
+        let timeoutId;
+        
+        const aplicarFiltrosConRetraso = function() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(aplicarFiltros, 300);
+        };
+        
+        form.addEventListener('input', aplicarFiltrosConRetraso);
         form.addEventListener('change', aplicarFiltros);
         sincronizarSliders();
     }
@@ -465,10 +468,13 @@ function cargarMasPropiedades() {
         btnCargarMas.className = 'btn-cargar-mas-container';
         
         const boton = document.createElement('button');
+        boton.type = 'button'; // IMPORTANTE: Evita que actúe como submit
         boton.className = 'btn-cargar-mas';
         boton.textContent = 'Cargar más propiedades (' + (propiedadesFiltradas.length - propiedadesMostradas) + ' restantes)';
         boton.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            console.log('Click en cargar más. Estado antes:', propiedadesMostradas);
             cargarMasPropiedades();
         });
         
