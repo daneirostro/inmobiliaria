@@ -31,6 +31,11 @@ const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_CORREO = 'correo';
 const COLUMNA_IMAGENES = 'imagenes'; // Cambiar temporalmente a 'correo' para probar
 
+// Variables para paginación
+let propiedadesFiltradas = [];
+let propiedadesMostradas = 0;
+const PROPIEDADES_POR_PAGINA = 12;
+
 // ====================================================================
 // FUNCIONES UTILITARIAS
 // ====================================================================
