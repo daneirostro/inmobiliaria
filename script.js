@@ -28,12 +28,15 @@ const COLUMNA_ANTIGUEDAD = 'antiguedad';
 const COLUMNA_DOCUMENTACION = 'documentacion';
 const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_CORREO = 'correo';
-const COLUMNA_IMAGENES = 'imagenes'; // Cambiar temporalmente a 'correo' para probar
+const COLUMNA_IMAGENES = 'imagenes';
 
 // Variables para paginación
 let propiedadesFiltradas = [];
 let propiedadesMostradas = 0;
 const PROPIEDADES_POR_PAGINA = 12;
+
+// Flag para evitar aplicar filtros durante la carga de más propiedades
+let cargandoMasPropiedades = false;
 
 // ====================================================================
 // FUNCIONES UTILITARIAS
@@ -88,7 +91,6 @@ function obtenerImagenes(propiedad) {
         return ['https://via.placeholder.com/400x300?text=Sin+Imagen'];
     }
     
-    // Si hay múltiples URLs separadas por coma, pipe o punto y coma
     const separadores = /[,|;]/;
     const urls = String(imagenesStr).split(separadores).map(url => url.trim()).filter(url => url);
     
@@ -96,14 +98,12 @@ function obtenerImagenes(propiedad) {
         return ['https://via.placeholder.com/400x300?text=Sin+Imagen'];
     }
     
-    // Convertir URLs de Google Drive al formato correcto
     return urls.map(function(url) {
         return convertirURLGoogleDrive(url);
     });
 }
 
 function convertirURLGoogleDrive(url) {
-    // Si es una URL de Google Drive en formato /file/d/ID/view, convertirla
     const regexDrive = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
     const match = url.match(regexDrive);
     
@@ -112,7 +112,6 @@ function convertirURLGoogleDrive(url) {
         return 'https://drive.google.com/uc?export=view&id=' + fileId;
     }
     
-    // Convertir URLs de Imgur al formato directo
     const regexImgur = /imgur\.com\/([a-zA-Z0-9]+)$/;
     const matchImgur = url.match(regexImgur);
     
@@ -121,7 +120,6 @@ function convertirURLGoogleDrive(url) {
         return 'https://i.imgur.com/' + imgurId + '.jpg';
     }
     
-    // Si ya está en formato correcto o es otra URL, devolverla tal cual
     return url;
 }
 
@@ -188,10 +186,10 @@ async function cargarPropiedades() {
         console.log('✅ ' + PROPIEDADES.length + ' propiedades cargadas.');
 
         if (esPaginaListado && !esPaginaIndividual) {
-            renderizarListado(PROPIEDADES);
-            configurarFiltros();
             propiedadesFiltradas = PROPIEDADES;
             propiedadesMostradas = 0;
+            configurarFiltros();
+            renderizarListado(PROPIEDADES);
         } else if (esPaginaIndividual && !esPaginaListado) {
             mostrarPropiedadIndividual();
         }
@@ -225,6 +223,12 @@ function obtenerValoresFiltros() {
 }
 
 function aplicarFiltros() {
+    // Si estamos cargando más propiedades, no aplicar filtros
+    if (cargandoMasPropiedades) {
+        console.log('⏸️ Cargando más propiedades, filtros pausados');
+        return;
+    }
+    
     const filtros = obtenerValoresFiltros();
     
     const resultados = PROPIEDADES.filter(propiedad => {
@@ -365,7 +369,6 @@ function sincronizarSliders() {
 function configurarFiltros() {
     const form = document.getElementById('form-filtros');
     if (form) {
-        // Usar debounce para evitar llamadas excesivas
         let timeoutId;
         
         const aplicarFiltrosConRetraso = function() {
@@ -389,7 +392,6 @@ function renderizarListado(listado) {
     
     console.log('renderizarListado llamado con', listado.length, 'propiedades');
     
-    // Limpiar el contenedor completamente
     contenedor.innerHTML = ''; 
 
     if (listado.length === 0) {
@@ -397,13 +399,11 @@ function renderizarListado(listado) {
         return;
     }
 
-    // Guardar las propiedades filtradas y resetear contador
     propiedadesFiltradas = listado;
     propiedadesMostradas = 0;
     
     console.log('Reseteado a 0. Llamando a cargarMasPropiedades');
     
-    // Renderizar las primeras propiedades
     cargarMasPropiedades();
 }
 
@@ -411,30 +411,28 @@ function cargarMasPropiedades() {
     const contenedor = document.getElementById('listado');
     if (!contenedor) return;
     
-    console.log('cargarMasPropiedades - Mostradas:', propiedadesMostradas, 'Total:', propiedadesFiltradas.length);
+    // Activar flag para evitar que se apliquen filtros durante la carga
+    cargandoMasPropiedades = true;
     
-    // Remover el botón "Cargar más" si existe (sin limpiar las cards)
+    console.log('🔄 cargarMasPropiedades - Mostradas:', propiedadesMostradas, 'Total:', propiedadesFiltradas.length);
+    
     const btnCargarMasExistente = document.getElementById('btn-cargar-mas');
     if (btnCargarMasExistente) {
         btnCargarMasExistente.remove();
     }
     
-    // Remover mensaje final si existe
     const mensajeFinExistente = contenedor.querySelector('.mensaje-fin');
     if (mensajeFinExistente) {
         mensajeFinExistente.remove();
     }
     
-    // Calcular cuántas propiedades mostrar
     const inicio = propiedadesMostradas;
     const fin = Math.min(inicio + PROPIEDADES_POR_PAGINA, propiedadesFiltradas.length);
     
-    console.log('Renderizando del', inicio, 'al', fin);
+    console.log('📦 Renderizando del', inicio, 'al', fin);
     
-    // Crear un fragmento para mejor rendimiento
     const fragmento = document.createDocumentFragment();
     
-    // Renderizar las propiedades de este lote
     for (let i = inicio; i < fin; i++) {
         const propiedad = propiedadesFiltradas[i];
         const card = document.createElement('article');
@@ -461,15 +459,18 @@ function cargarMasPropiedades() {
         fragmento.appendChild(card);
     }
     
-    // Agregar todas las cards al contenedor de una vez
     contenedor.appendChild(fragmento);
     
-    // Actualizar contador DESPUÉS de renderizar
     propiedadesMostradas = fin;
     
-    console.log('Actualizado propiedadesMostradas a:', propiedadesMostradas);
+    console.log('✅ Actualizado propiedadesMostradas a:', propiedadesMostradas);
     
-    // Si hay más propiedades, mostrar el botón "Cargar más"
+    // Desactivar flag después de un pequeño delay para asegurar que todos los eventos se completen
+    setTimeout(function() {
+        cargandoMasPropiedades = false;
+        console.log('✓ Flag desactivada, filtros habilitados nuevamente');
+    }, 100);
+    
     if (propiedadesMostradas < propiedadesFiltradas.length) {
         const btnCargarMas = document.createElement('div');
         btnCargarMas.id = 'btn-cargar-mas';
@@ -480,19 +481,16 @@ function cargarMasPropiedades() {
         boton.className = 'btn-cargar-mas';
         boton.textContent = 'Cargar más propiedades (' + (propiedadesFiltradas.length - propiedadesMostradas) + ' restantes)';
         
-        // Usar closure para capturar el valor actual
-        boton.onclick = function(e) {
+        boton.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Click detectado. propiedadesMostradas antes del click:', propiedadesMostradas);
+            console.log('👆 Click detectado. propiedadesMostradas:', propiedadesMostradas);
             cargarMasPropiedades();
-            return false;
-        };
+        });
         
         btnCargarMas.appendChild(boton);
         contenedor.appendChild(btnCargarMas);
     } else {
-        // Si ya se mostraron todas, agregar mensaje
         const mensajeFin = document.createElement('div');
         mensajeFin.className = 'mensaje-fin';
         mensajeFin.innerHTML = '<p>✓ Se mostraron todas las propiedades (' + propiedadesFiltradas.length + ' en total)</p>';
@@ -555,7 +553,6 @@ function mostrarPropiedadIndividual() {
 
     elementos.titulo.textContent = (propiedad[COLUMNA_PROPOSITO] || 'Propiedad') + ' - ' + nombrePropiedad;
     
-    // Renderizar galería de imágenes
     const galeriaContainer = document.getElementById('galeria-imagenes');
     if (galeriaContainer) {
         galeriaContainer.innerHTML = '';
@@ -594,21 +591,18 @@ function mostrarPropiedadIndividual() {
         }
     }
     
-    // Llenar información general
     if (elementos.vendedor) elementos.vendedor.textContent = propiedad[COLUMNA_VENDEDOR] || 'No especificado';
     if (elementos.direccion) elementos.direccion.textContent = propiedad[COLUMNA_DIRECCION] || 'No especificado';
     if (elementos.distrito) elementos.distrito.textContent = propiedad[COLUMNA_UBICACION] || 'No especificado';
     if (elementos.referencias) elementos.referencias.textContent = propiedad[COLUMNA_REFERENCIAS] || 'No especificado';
     if (elementos.proposito) elementos.proposito.textContent = propiedad[COLUMNA_PROPOSITO] || 'No especificado';
     
-    // Llenar información económica
     if (elementos.precio) elementos.precio.textContent = precio;
     if (elementos.mantenimiento) {
         const mant = propiedad[COLUMNA_MANTENIMIENTO] ? 'S/. ' + propiedad[COLUMNA_MANTENIMIENTO] : 'No aplica';
         elementos.mantenimiento.textContent = mant;
     }
     
-    // Llenar características de la propiedad
     if (elementos.area) elementos.area.textContent = (propiedad[COLUMNA_M2] || 'N/D') + ' m²';
     if (elementos.dormitorios) elementos.dormitorios.textContent = propiedad[COLUMNA_DORM] || 'N/D';
     if (elementos.banios) elementos.banios.textContent = propiedad[COLUMNA_BANIOS] || 'N/D';
@@ -618,10 +612,8 @@ function mostrarPropiedadIndividual() {
     if (elementos.areasComunes) elementos.areasComunes.textContent = propiedad[COLUMNA_AREAS_COMUNES] || 'No especificado';
     if (elementos.antiguedad) elementos.antiguedad.textContent = propiedad[COLUMNA_ANTIGUEDAD] || 'No especificado';
     
-    // Llenar características adicionales
     if (elementos.caracteristicas) elementos.caracteristicas.textContent = propiedad[COLUMNA_CARACTERISTICAS] || 'No especificado';
     
-    // Llenar contacto
     if (elementos.contacto) {
         if (propiedad[COLUMNA_CONTACTO]) {
             elementos.contacto.innerHTML = '<a href="' + enlaceWhatsApp + '" target="_blank" rel="noopener noreferrer" class="whatsapp-link">💬 ' + propiedad[COLUMNA_CONTACTO] + ' (WhatsApp)</a>';
@@ -632,7 +624,6 @@ function mostrarPropiedadIndividual() {
     
     if (elementos.email) elementos.email.textContent = propiedad[COLUMNA_CORREO] || 'No especificado';
     
-    // Configurar botones para compartir
     configurarBotonesCompartir(nombrePropiedad, precio);
 }
 
@@ -642,25 +633,21 @@ function configurarBotonesCompartir(nombrePropiedad, precio) {
     const textoEncoded = encodeURIComponent(textoCompartir);
     const urlEncoded = encodeURIComponent(urlActual);
     
-    // WhatsApp
     const btnWhatsApp = document.getElementById('btn-whatsapp');
     if (btnWhatsApp) {
         btnWhatsApp.href = 'https://wa.me/?text=' + textoEncoded + ' ' + urlEncoded;
     }
     
-    // Facebook
     const btnFacebook = document.getElementById('btn-facebook');
     if (btnFacebook) {
         btnFacebook.href = 'https://www.facebook.com/sharer/sharer.php?u=' + urlEncoded;
     }
     
-    // Twitter
     const btnTwitter = document.getElementById('btn-twitter');
     if (btnTwitter) {
         btnTwitter.href = 'https://twitter.com/intent/tweet?text=' + textoEncoded + '&url=' + urlEncoded;
     }
     
-    // Copiar enlace
     const btnCopiar = document.getElementById('btn-copiar');
     if (btnCopiar) {
         btnCopiar.addEventListener('click', function(e) {
@@ -681,7 +668,6 @@ function configurarBotonesCompartir(nombrePropiedad, precio) {
                     alert('No se pudo copiar el enlace');
                 });
             } else {
-                // Fallback para navegadores antiguos
                 const inputTemp = document.createElement('input');
                 inputTemp.value = urlActual;
                 document.body.appendChild(inputTemp);
