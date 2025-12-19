@@ -38,6 +38,10 @@ const PROPIEDADES_POR_PAGINA = 12;
 // Flag para evitar aplicar filtros durante la carga de más propiedades
 let cargandoMasPropiedades = false;
 
+// Variables para la galería de imágenes
+let imagenesGaleria = [];
+let imagenActualIndex = 0;
+
 // ====================================================================
 // FUNCIONES UTILITARIAS
 // ====================================================================
@@ -223,7 +227,6 @@ function obtenerValoresFiltros() {
 }
 
 function aplicarFiltros() {
-    // Si estamos cargando más propiedades, no aplicar filtros
     if (cargandoMasPropiedades) {
         console.log('⏸️ Cargando más propiedades, filtros pausados');
         return;
@@ -411,7 +414,6 @@ function cargarMasPropiedades() {
     const contenedor = document.getElementById('listado');
     if (!contenedor) return;
     
-    // Activar flag para evitar que se apliquen filtros durante la carga
     cargandoMasPropiedades = true;
     
     console.log('🔄 cargarMasPropiedades - Mostradas:', propiedadesMostradas, 'Total:', propiedadesFiltradas.length);
@@ -444,16 +446,19 @@ function cargarMasPropiedades() {
         const nombrePropiedad = (propiedad[COLUMNA_TIPO] || 'Inmueble') + ' en ' + (propiedad[COLUMNA_UBICACION] || 'Lima');
         const enlaceWhatsApp = generarEnlaceWhatsApp(propiedad[COLUMNA_CONTACTO], nombrePropiedad);
         const imagenPrincipal = obtenerImagenPrincipal(propiedad);
+        const urlDetalle = 'propiedad.html?id=' + propiedad[COLUMNA_ID];
 
         card.innerHTML = '<div class="propiedad-imagen">' +
+            '<a href="' + urlDetalle + '">' +
             '<img src="' + imagenPrincipal + '" alt="' + nombrePropiedad + '" loading="lazy">' +
+            '</a>' +
             '</div>' +
             '<div class="propiedad-info">' +
             '<h3>' + nombrePropiedad + '</h3>' +
             '<p class="precio">🏠 ' + (propiedad[COLUMNA_PROPOSITO] || 'Venta') + ': <strong>' + precioFormateado + '</strong></p>' +
             '<p>📐 ' + (propiedad[COLUMNA_M2] || 'N/D') + ' m² | 🛏️ ' + (propiedad[COLUMNA_DORM] || 'N/D') + ' | 🛁 ' + (propiedad[COLUMNA_BANIOS] || 'N/D') + '</p>' +
             '<p>📞 <a href="' + enlaceWhatsApp + '" target="_blank" rel="noopener noreferrer" class="whatsapp-link">Contactar por WhatsApp</a></p>' +
-            '<a href="propiedad.html?id=' + propiedad[COLUMNA_ID] + '" class="boton-detalle">Ver Detalles</a>' +
+            '<a href="' + urlDetalle + '" class="boton-detalle">Ver Detalles</a>' +
             '</div>';
         
         fragmento.appendChild(card);
@@ -465,7 +470,6 @@ function cargarMasPropiedades() {
     
     console.log('✅ Actualizado propiedadesMostradas a:', propiedadesMostradas);
     
-    // Desactivar flag después de un pequeño delay para asegurar que todos los eventos se completen
     setTimeout(function() {
         cargandoMasPropiedades = false;
         console.log('✓ Flag desactivada, filtros habilitados nuevamente');
@@ -560,34 +564,56 @@ function mostrarPropiedadIndividual() {
         if (imagenes.length === 1) {
             galeriaContainer.innerHTML = '<img src="' + imagenes[0] + '" alt="' + nombrePropiedad + '" class="imagen-principal">';
         } else {
-            let galeriaHTML = '<div class="imagen-principal-container">' +
+            imagenesGaleria = imagenes;
+            imagenActualIndex = 0;
+            
+            let galeriaHTML = '<div class="galeria-principal">' +
+                '<button class="galeria-nav galeria-nav-prev" id="btn-prev" aria-label="Imagen anterior">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
+                '</button>' +
+                '<div class="imagen-principal-container">' +
                 '<img src="' + imagenes[0] + '" alt="' + nombrePropiedad + '" class="imagen-principal" id="imagen-activa">' +
+                '<div class="contador-imagenes" id="contador-imagenes">1 / ' + imagenes.length + '</div>' +
+                '</div>' +
+                '<button class="galeria-nav galeria-nav-next" id="btn-next" aria-label="Imagen siguiente">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+                '</button>' +
                 '</div>' +
                 '<div class="miniaturas">';
             
             imagenes.forEach(function(img, index) {
-                galeriaHTML += '<img src="' + img + '" alt="Imagen ' + (index + 1) + '" class="miniatura" data-index="' + index + '">';
+                galeriaHTML += '<img src="' + img + '" alt="Imagen ' + (index + 1) + '" class="miniatura' + (index === 0 ? ' activa' : '') + '" data-index="' + index + '">';
             });
             
             galeriaHTML += '</div>';
             galeriaContainer.innerHTML = galeriaHTML;
             
-            const miniaturas = galeriaContainer.querySelectorAll('.miniatura');
-            const imagenActiva = document.getElementById('imagen-activa');
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
             
+            btnPrev.addEventListener('click', function() {
+                cambiarImagen(-1);
+            });
+            
+            btnNext.addEventListener('click', function() {
+                cambiarImagen(1);
+            });
+            
+            const miniaturas = galeriaContainer.querySelectorAll('.miniatura');
             miniaturas.forEach(function(miniatura) {
                 miniatura.addEventListener('click', function() {
-                    const index = this.getAttribute('data-index');
-                    imagenActiva.src = imagenes[index];
-                    
-                    miniaturas.forEach(m => m.classList.remove('activa'));
-                    this.classList.add('activa');
+                    const index = parseInt(this.getAttribute('data-index'));
+                    mostrarImagen(index);
                 });
             });
             
-            if (miniaturas.length > 0) {
-                miniaturas[0].classList.add('activa');
-            }
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    cambiarImagen(-1);
+                } else if (e.key === 'ArrowRight') {
+                    cambiarImagen(1);
+                }
+            });
         }
     }
     
@@ -625,6 +651,42 @@ function mostrarPropiedadIndividual() {
     if (elementos.email) elementos.email.textContent = propiedad[COLUMNA_CORREO] || 'No especificado';
     
     configurarBotonesCompartir(nombrePropiedad, precio);
+}
+
+function cambiarImagen(direccion) {
+    imagenActualIndex += direccion;
+    
+    if (imagenActualIndex < 0) {
+        imagenActualIndex = imagenesGaleria.length - 1;
+    } else if (imagenActualIndex >= imagenesGaleria.length) {
+        imagenActualIndex = 0;
+    }
+    
+    mostrarImagen(imagenActualIndex);
+}
+
+function mostrarImagen(index) {
+    imagenActualIndex = index;
+    
+    const imagenActiva = document.getElementById('imagen-activa');
+    const contador = document.getElementById('contador-imagenes');
+    const miniaturas = document.querySelectorAll('.miniatura');
+    
+    if (imagenActiva) {
+        imagenActiva.src = imagenesGaleria[index];
+    }
+    
+    if (contador) {
+        contador.textContent = (index + 1) + ' / ' + imagenesGaleria.length;
+    }
+    
+    miniaturas.forEach(function(miniatura, i) {
+        if (i === index) {
+            miniatura.classList.add('activa');
+        } else {
+            miniatura.classList.remove('activa');
+        }
+    });
 }
 
 function configurarBotonesCompartir(nombrePropiedad, precio) {
