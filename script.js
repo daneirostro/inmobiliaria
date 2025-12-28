@@ -29,6 +29,7 @@ const COLUMNA_DOCUMENTACION = 'documentacion';
 const COLUMNA_CONTACTO = 'contacto';
 const COLUMNA_CORREO = 'correo';
 const COLUMNA_IMAGENES = 'imagenes';
+const COLUMNA_DESCRIPCION = 'descripcion_completa';
 
 // Variables para paginación
 let propiedadesFiltradas = [];
@@ -649,6 +650,16 @@ function mostrarPropiedadIndividual() {
     }
     
     if (elementos.email) elementos.email.textContent = propiedad[COLUMNA_CORREO] || 'No especificado';
+
+    const descripcionContainer = document.getElementById('detalles-descripcion-completa');
+    if (descripcionContainer) {
+        const descripcion = propiedad[COLUMNA_DESCRIPCION];
+        if (descripcion && descripcion.trim()) {
+            descripcionContainer.innerHTML = '<p>' + descripcion + '</p>';
+        } else {
+            descripcionContainer.innerHTML = '<p style="color: #999; font-style: italic;">No hay descripción disponible.</p>';
+        }
+    }
     
     configurarBotonesCompartir(nombrePropiedad, precio);
 }
