@@ -2,7 +2,7 @@
 // CONFIGURACIÓN CLAVE Y CONSTANTES DEL CSV
 // ====================================================================
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8KKYArUaGlzi3_-apBixMuMFym52t1RZ1K80VSnWUza8NHk14AanEuXAiz0rQVvVOBWjd5oz8IfbN/pub?gid=1956281180&single=true&output=csv"; 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9RT_Y_xC8UJAK78r9rq3qtNTJ0_Hf7qt-H39biCvAmADl451ylxZjhM30P9kgMnBYUxQhByFpCgJJ/pub?gid=751735966&single=true&output=csv"; 
 let PROPIEDADES = [];
 const DELIMITADOR_CSV = ',';
 
