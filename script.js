@@ -640,6 +640,12 @@ function mostrarPropiedadIndividual() {
     if (elementos.antiguedad) elementos.antiguedad.textContent = propiedad[COLUMNA_ANTIGUEDAD] || 'No especificado';
     
     if (elementos.caracteristicas) elementos.caracteristicas.textContent = propiedad[COLUMNA_CARACTERISTICAS] || 'No especificado';
+
+    // Mostrar descripción completa con HTML
+    const descripcionCompleta = document.getElementById('detalles-descripcion-completa');
+    if (descripcionCompleta) {
+        descripcionCompleta.innerHTML = propiedad[COLUMNA_DESCRIPCION] || 'No especificado';
+    }
     
     if (elementos.contacto) {
         if (propiedad[COLUMNA_CONTACTO]) {
