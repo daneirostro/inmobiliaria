@@ -959,10 +959,9 @@ footer {
 
 /* Estilos para descripción completa - AL FINAL, sin formato de tabla */
 .descripcion-completa-seccion {
-    margin: 20px 0;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    margin: 20px 0 0 0;
+    padding: 20px 0;
+    background: transparent;
 }
 
 .descripcion-completa-seccion h3 {
