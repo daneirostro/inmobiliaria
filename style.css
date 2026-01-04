@@ -957,12 +957,28 @@ footer {
     border-radius: 3px;
 }
 
-.seccion-info p {
-    display: flex;  /* ← Esto causa el problema */
-    align-items: flex-start;
+/* Estilos para descripción completa - AL FINAL, sin formato de tabla */
+.descripcion-completa-seccion {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
 }
 
-.seccion-info p strong {
-    min-width: 180px;  /* ← Y esto */
-    flex-shrink: 0;
+.descripcion-completa-seccion h3 {
+    color: #007bff;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007bff;
+}
+
+.descripcion-completa-seccion #detalles-descripcion-completa {
+    line-height: 1.8;
+    color: #333;
+    text-align: justify;
+}
+
+.descripcion-completa-seccion strong {
+    color: #007bff;
+    font-weight: 600;
 }
