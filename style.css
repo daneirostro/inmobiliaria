@@ -956,3 +956,13 @@ footer {
     padding: 2px 4px;
     border-radius: 3px;
 }
+
+.seccion-info p {
+    display: flex;  /* ← Esto causa el problema */
+    align-items: flex-start;
+}
+
+.seccion-info p strong {
+    min-width: 180px;  /* ← Y esto */
+    flex-shrink: 0;
+}
